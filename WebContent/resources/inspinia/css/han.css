@@ -1,0 +1,114 @@
+@charset "utf-8";
+/* CSS Document */
+
+body, p, h1, h2, h3, h4, h5, h6, ul, ol, li, dl, dt, dd, table, th, td, form, fieldset, legend, input, textarea, button, select, body {
+    padding: 0;
+    margin: 0;
+    font-family:'나눔고딕', sans-serif;
+    font-style: medium !important;
+    letter-spacing:-2px;
+    }
+form, td, div, span, ul, li, ol, dl, dt, dd, textarea, h1, h2, h3, p, a { margin: 0; padding: 0; word-break: break-all; }
+div { display: block }
+li {list-style:none;}
+a {text-decoration:none;}
+a:hover { }
+a:active { }
+select::-ms-expand{display:none;}
+select {-webkit-appearance:none;}
+img {border:0;}
+.clear {clear:both;}
+
+
+/*요금정보*/
+/* 년,월,일 */
+.year_wrap {position:absolute; font-size:32px; color:#383838; line-height:30px; width:350px; height:30px; left:1540px; top:27px; text-align:right; letter-spacing:-3px;}
+
+/*공통*/
+.ele {width:108px; position:absolute; line-height:30px; text-align:right; font-size:24px; font-weight: 700;}
+.color_db {color:#434655;}
+.color_r {color:#d9534f;}
+.color_b {color:#3a9daa;}
+.color_g {color:#9cb850;}
+
+/*아연말동*/
+.kw_1-1 {top:223px; left:1066px;}
+.kw_1-2 {top:255px; left:1066px;}
+
+/*신설로*/
+.kw_2-1 {top:420px; left:270px;}
+.kw_2-2 {top:450px; left:270px;}
+.kw_2-3 {top:480px; left:270px;}
+
+.kw_2-4 {top:550px; left:270px;}
+.kw_2-5 {top:580px; left:270px;}
+.kw_2-6 {top:612px; left:270px;}
+
+.kw_2-7 {top:680px; left:270px;}
+.kw_2-8 {top:710px; left:270px;}
+.kw_2-9 {top:742px; left:270px;}
+
+.kw_2-10 {top:810px; left:270px;}
+.kw_2-11 {top:840px; left:270px;}
+.kw_2-12 {top:872px; left:270px;}
+
+.kw_2-13 {top:940px; left:270px;}
+.kw_2-14 {top:970px; left:270px;}
+.kw_2-15 {top:1002px; left:270px;}
+
+.kw_2-16 {top:420px; left:530px;}
+.kw_2-17 {top:450px; left:530px;}
+.kw_2-18 {top:480px; left:530px;}
+
+.kw_2-19 {top:550px; left:530px;}
+.kw_2-20 {top:580px; left:530px;}
+.kw_2-21 {top:612px; left:530px;}
+
+.kw_2-22 {top:680px; left:530px;}
+.kw_2-23 {top:710px; left:530px;}
+.kw_2-24 {top:742px; left:530px;}
+
+.kw_2-25 {top:810px; left:530px;}
+.kw_2-26 {top:840px; left:530px;}
+.kw_2-27 {top:872px; left:530px;}
+
+/*분급실*/
+.kw_3-1 {top:420px; left:805px;}
+.kw_3-2 {top:450px; left:805px;}
+.kw_3-3 {top:480px; left:805px;}
+
+.kw_3-4 {top:550px; left:805px;}
+.kw_3-5 {top:580px; left:805px;}
+.kw_3-6 {top:612px; left:805px;}
+
+.kw_3-7 {top:680px; left:805px;}
+.kw_3-8 {top:710px; left:805px;}
+.kw_3-9 {top:742px; left:805px;}
+
+.kw_3-10 {top:810px; left:805px;}
+.kw_3-11 {top:840px; left:805px;}
+.kw_3-12 {top:872px; left:805px;}
+
+.kw_3-13 {top:420px; left:1066px;}
+.kw_3-14 {top:450px; left:1066px;}
+.kw_3-15 {top:480px; left:1066px;}
+
+.kw_3-16 {top:550px; left:1066px;}
+.kw_3-17 {top:580px; left:1066px;}
+.kw_3-18 {top:612px; left:1066px;}
+
+.kw_3-19 {top:680px; left:1066px;}
+.kw_3-20 {top:710px; left:1066px;}
+.kw_3-21 {top:742px; left:1066px;}
+
+.kw_3-22 {top:810px; left:1066px;}
+.kw_3-23 {top:840px; left:1066px;}
+.kw_3-24 {top:872px; left:1066px;}
+
+
+/*콤프레샤*/
+.kw_4-1 {top:385px; left:1597px;}
+.kw_4-2 {top:415px; left:1597px;}
+.kw_4-3 {top:445px; left:1597px;}
+
+

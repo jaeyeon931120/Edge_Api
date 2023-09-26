@@ -1,0 +1,389 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sunlightMapper">
+			
+	<!-- 8LINE : SUNLIGHT DATA, 102LINE : SUNLIGHTSTATUS DATA, 152 LINE : INDEPENDENCE DATA, 450 LINE : SUNLIGHTGRAPH DATA -->
+						
+	<!-- SUNLIGHT DATA -->
+	<select id="sunlightData" parameterType="HashMap" resultType="HashMap">
+	/*태양광 실시간발전량 및 전일비교 sunlightMapper.sunlightData*/
+	SELECT
+		IFNULL(A.VAL_DATE, "00000000") AS VAL_DATE,
+		ROUND(IFNULL(SUM(A.TODAY_VAL) / 1000, 0), 1) AS TODAY_VAL,
+		ROUND(IFNULL(A.YESTERDAY_VAL / 1000, 0), 1) AS YESTERDAY_VAL,
+		ROUND(IFNULL(A.YESTERDAY_TOTAL / 1000, 0), 1) AS YESTERDAY_TOTAL,
+		ROUND((IFNULL(SUM(A.TODAY_VAL), 0) - IFNULL(A.YESTERDAY_VAL, 0)) / IFNULL(A.YESTERDAY_VAL, 0) * 100, 1) AS VAL_EFFICIENCY
+	FROM
+	(
+		SELECT
+			C.SENSOR_SN,
+			IFNULL(SUBSTR(C.VAL_DATE, 1, 8), "00000000") AS VAL_DATE,
+			MAX(IFNULL(C.TOTAL_WH, 0)) - MIN(IFNULL(C.TOTAL_WH, 0)) AS TODAY_VAL,
+			IFNULL(D.VAL, 0) AS YESTERDAY_VAL,
+			IFNULL(E.VAL, 0) AS YESTERDAY_TOTAL
+		FROM
+			${dbname}.bems_home AS A
+		LEFT JOIN
+			${dbname}.bems_sensor_solar AS B
+		ON
+			A.COMPLEX_CODE_PK = B.COMPLEX_CODE_PK
+		AND
+			A.HOME_DONG_PK = B.HOME_DONG_PK
+		AND
+			A.HOME_HO_PK = B.HOME_HO_PK
+		LEFT JOIN
+			${dbname}.bems_meter_solar AS C
+		ON
+			B.SENSOR_SN = C.SENSOR_SN
+		LEFT JOIN
+			(
+				SELECT
+					A.SENSOR_SN,
+					IFNULL(A.VAL_DATE, "00000000") AS VAL_DATE,
+					IFNULL(SUM(A.VAL), 0) AS VAL
+				FROM
+				(
+					SELECT
+						C.SENSOR_SN,
+						SUBSTR(C.VAL_DATE, 1, 8) AS VAL_DATE,
+						MAX(C.TOTAL_WH) - MIN(C.TOTAL_WH) AS VAL
+					FROM
+						${dbname}.bems_home AS A
+					LEFT JOIN
+						${dbname}.bems_sensor_solar AS B
+					ON
+						A.COMPLEX_CODE_PK = B.COMPLEX_CODE_PK
+					AND
+						A.HOME_DONG_PK = B.HOME_DONG_PK
+					AND
+						A.HOME_HO_PK = B.HOME_HO_PK
+					LEFT JOIN
+						${dbname}.bems_meter_solar AS C
+					ON
+						B.SENSOR_SN = C.SENSOR_SN
+					WHERE
+						B.FG_USE = "Y"
+					AND
+						C.VAL_DATE  <![CDATA[>=]]>  #{prevfromdate}
+					AND
+						C.VAL_DATE  <![CDATA[<=]]>  #{prevtodate}
+					AND
+						A.COMPLEX_CODE_PK = #{complexcode}
+					AND
+						B.`INOUT` = "I"
+					GROUP BY C.SENSOR_SN, SUBSTR(C.VAL_DATE, 1, 8)
+			)A
+			GROUP BY A.VAL_DATE
+		)D
+		ON
+			B.SENSOR_SN = D.SENSOR_SN
+		LEFT JOIN
+			${dbname}.bems_stat_daily_solar AS E
+		ON
+			B.SENSOR_SN = E.SENSOR_SN
+		WHERE
+			B.FG_USE = "Y"
+		AND
+			C.VAL_DATE <![CDATA[>=]]> #{fromdate}
+		AND
+			C.VAL_DATE <![CDATA[<=]]> #{todate}
+		AND
+			E.VAL_DATE LIKE #{sprevfromdate}
+		AND
+			A.COMPLEX_CODE_PK = #{complexcode}
+		AND
+			B.`INOUT` = "I"
+		GROUP BY C.SENSOR_SN, SUBSTR(C.VAL_DATE, 1, 8)
+	)A
+	GROUP BY A.VAL_DATE
+	</select>
+	
+	<!-- SUNLIGHTSTATUS DATA -->
+	<select id="sunlightStatus" parameterType="HashMap" resultType="HashMap">
+	/*태양광 발전시간 및 효율 sunlightMapper.sunlightStatus*/
+	SELECT
+		A.EFFICIENCY AS EFFICIENCY,
+		A.VAL_DATE AS VAL_DATE,
+		ROUND(((MAX(A.NOW_VAL) - MIN(A.NOW_VAL)) / 1000) / 32.358, 1) AS HOUR
+	FROM
+	(
+		SELECT
+			C.SENSOR_SN,
+			IFNULL(C.TOTAL_WH, 0) AS NOW_VAL,
+			IFNULL(B.CAPACITY, 0) AS CAPACITY,
+			CASE WHEN
+				REPLACE(SUBSTRING_INDEX(SUBSTRING_INDEX(SUBSTRING_INDEX(SUBSTRING_INDEX(SUBSTRING_INDEX(B.all_data, ':', 4), ':', 3), ',', 2), ',', -1), ':', 1), '"', '') like '%efficiency%'
+			THEN 
+				IFNULL(ROUND(REPLACE(SUBSTRING_INDEX(SUBSTRING_INDEX(SUBSTRING_INDEX(SUBSTRING_INDEX(B.all_data, ':', 4), ':', 3), ':', -1), ',', 1), '"', '') * 100), 0)
+			ELSE 
+				0 END AS EFFICIENCY,
+			IFNULL(SUBSTR(C.VAL_DATE, 1, 12), "000000000000") AS VAL_DATE
+		FROM
+			${dbname}.bems_home AS A
+		LEFT JOIN
+			${dbname}.bems_sensor_solar AS B
+		ON
+			A.COMPLEX_CODE_PK = B.COMPLEX_CODE_PK
+		AND
+			A.HOME_DONG_PK = B.HOME_DONG_PK
+		AND
+			A.HOME_HO_PK = B.HOME_HO_PK
+		LEFT JOIN
+			${dbname}.bems_meter_solar AS C
+		ON
+			B.SENSOR_SN = C.SENSOR_SN
+		WHERE
+			B.FG_USE = "Y"
+		AND
+			A.COMPLEX_CODE_PK = #{complexcode}
+		AND
+			B.`INOUT` = "I"
+		AND
+			C.VAL_DATE <![CDATA[>=]]> #{fromdate}
+		AND
+			C.VAL_DATE <![CDATA[<=]]> #{todate}
+		GROUP BY C.VAL_DATE
+		ORDER BY C.VAL_DATE DESC
+	)A
+	ORDER BY A.VAL_DATE DESC LIMIT 1
+	</select>
+	
+	<!-- EDGESENSORNAME -->
+	<select id="edgeSensorName"  parameterType="HashMap" resultType="HashMap">
+	/* 엣지 센서 이름 가져오기 sunlightMapper.edgeSensorName */
+	SELECT
+		B.sensor_sn
+	FROM
+		${dbname}.bems_home AS A
+	LEFT JOIN
+		${dbname}.${sensor} AS B
+	ON
+		A.complex_code_pk = B.complex_code_pk
+	AND
+		A.home_dong_pk = B.home_dong_pk
+	AND
+		A.home_ho_pk = B.home_ho_pk
+	WHERE
+		B.complex_code_pk = #{complexcode}
+	AND
+		B.fg_use = "y"
+	</select>
+	
+	<!-- INDEPENDENCE_OUTPUT -->
+	<select id="independence_output" parameterType="HashMap" resultType="HashMap">
+	/*태양광 발전량 및 에너지자립률 sunlightMapper.independence_output*/
+	SELECT
+		SUBSTR(C.VAL_DATE, 1, 8) AS val_date,
+		CAST((MAX(C.TOTAL_WH) - MIN(C.TOTAL_WH)) AS CHAR) AS val,
+		B.`inout` AS 'inout'
+	FROM
+		${dbname}.bems_home AS A
+	LEFT JOIN
+		${dbname}.${sensor} AS B
+	ON
+		A.COMPLEX_CODE_PK = B.COMPLEX_CODE_PK
+	AND
+		A.HOME_DONG_PK = B.HOME_DONG_PK
+	AND
+		A.HOME_HO_PK = B.HOME_HO_PK
+	LEFT JOIN
+		${dbname}.${meter} AS C
+	ON
+		B.SENSOR_SN = C.SENSOR_SN
+	WHERE
+		C.VAL_DATE <![CDATA[>=]]> #{todayfromdate}
+	AND
+		C.VAL_DATE <![CDATA[<=]]> #{todaytodate}
+	AND
+		A.COMPLEX_CODE_PK = #{complexcode}
+	<if test="sensorlist != null and sensorlist.isEmpty()">
+	AND
+		C.SENSOR_SN IN
+		<foreach item="item" index="index" collection="sensorlist" open="(" close=")" separator=",">
+			#{item}
+		</foreach>
+	</if>
+	GROUP BY C.SENSOR_SN, SUBSTR(C.VAL_DATE, 1, 8)
+	</select>
+	
+	<!-- INDEPENDENCE_CONSUMPTION -->
+	<select id="independence_consumption" parameterType="HashMap" resultType="HashMap">
+	/*태양광 발전량 및 에너지자립률 sunlightMapper.independence_consumption*/
+	SELECT
+		A.VAL_DATE AS val_date,
+		CAST(IFNULL(SUM(A.VAL), 0) AS CHAR) AS val
+	FROM
+	(
+		SELECT
+			C.VAL_DATE AS VAL_DATE,
+			IFNULL(C.val - D.val, 0) AS VAL
+		FROM
+			${dbname}.bems_home AS A
+		INNER JOIN
+			${dbname}.${sensor} AS B
+		ON
+			A.complex_code_pk = B.complex_code_pk
+		AND
+			A.home_dong_pk = B.home_dong_pk
+		AND
+			A.home_ho_pk = B.home_ho_pk
+		INNER JOIN
+		(
+			SELECT
+				sensor_sn AS sensor_sn,
+				SUBSTR(MAX(VAL_DATE), 1, 8) AS VAL_DATE,
+				SUBSTRING_INDEX(GROUP_CONCAT(CAST(TOTAL_WH AS CHAR) ORDER BY VAL_DATE DESC), ',', 1) AS val
+			FROM
+				${dbname}.${meter}
+			WHERE
+				val_date <![CDATA[>=]]> #{todayfromdate}
+			AND
+				val_date <![CDATA[<=]]> #{todaytodate}
+			<if test = "sensorlist != null and !sensorlist.isEmpty()">
+			AND sensor_sn IN
+			<foreach item="item" index="index" collection="sensorlist" open="(" close=")" separator=",">
+				#{item}
+			</foreach>
+			</if>
+			GROUP BY sensor_sn
+		)C
+		ON
+			B.sensor_sn = C.sensor_sn
+		INNER JOIN
+		(
+			SELECT
+				sensor_sn AS sensor_sn,
+				MAX(total_wh) AS val
+			FROM
+				${dbname}.${meter}
+			WHERE
+				val_date <![CDATA[>=]]> #{fromdate}
+			AND
+				val_date <![CDATA[<=]]> #{todate}
+			<if test = "sensorlist != null and !sensorlist.isEmpty()">
+			AND sensor_sn IN
+			<foreach item="item" index="index" collection="sensorlist" open="(" close=")" separator=",">
+				#{item}
+			</foreach>
+			</if>
+			GROUP BY sensor_sn
+		)D
+		ON
+		C.sensor_sn = D.sensor_sn
+		WHERE
+			B.complex_code_pk = #{complexcode}
+		GROUP BY
+		C.sensor_sn
+	)A
+	GROUP BY A.val_date
+	</select>
+	
+	<!-- SUNLIGHTGRAPH DATA -->
+	<select id="sunlightGraph" parameterType="HashMap" resultType="HashMap">
+	/*태양광 발전량,소비량 그래프 sunlightMapper.sunlightGraph*/
+	SELECT
+		'발전량' AS TITLE,
+		IFNULL(C.VAL_DATE, '00000000') AS VAL_DATE,
+		ROUND(IFNULL(SUM(C.VAL), 0) / 1000, 2) AS VAL,
+		ROUND(IFNULL(SUM(C.VAL_0), 0) / 1000, 2) AS VAL_0,
+		ROUND(IFNULL(SUM(C.VAL_1), 0) / 1000, 2) AS VAL_1,
+		ROUND(IFNULL(SUM(C.VAL_2), 0) / 1000, 2) AS VAL_2,
+		ROUND(IFNULL(SUM(C.VAL_3), 0) / 1000, 2) AS VAL_3,
+		ROUND(IFNULL(SUM(C.VAL_4), 0) / 1000, 2) AS VAL_4,
+		ROUND(IFNULL(SUM(C.VAL_5), 0) / 1000, 2) AS VAL_5,
+		ROUND(IFNULL(SUM(C.VAL_6), 0) / 1000, 2) AS VAL_6,
+		ROUND(IFNULL(SUM(C.VAL_7), 0) / 1000, 2) AS VAL_7,
+		ROUND(IFNULL(SUM(C.VAL_8), 0) / 1000, 2) AS VAL_8,
+		ROUND(IFNULL(SUM(C.VAL_9), 0) / 1000, 2) AS VAL_9,
+		ROUND(IFNULL(SUM(C.VAL_10), 0) / 1000, 2) AS VAL_10,
+		ROUND(IFNULL(SUM(C.VAL_11), 0) / 1000, 2) AS VAL_11,
+		ROUND(IFNULL(SUM(C.VAL_12), 0) / 1000, 2) AS VAL_12,
+		ROUND(IFNULL(SUM(C.VAL_13), 0) / 1000, 2) AS VAL_13,
+		ROUND(IFNULL(SUM(C.VAL_14), 0) / 1000, 2) AS VAL_14,
+		ROUND(IFNULL(SUM(C.VAL_15), 0) / 1000, 2) AS VAL_15,
+		ROUND(IFNULL(SUM(C.VAL_16), 0) / 1000, 2) AS VAL_16,
+		ROUND(IFNULL(SUM(C.VAL_17), 0) / 1000, 2) AS VAL_17,
+		ROUND(IFNULL(SUM(C.VAL_18), 0) / 1000, 2) AS VAL_18,
+		ROUND(IFNULL(SUM(C.VAL_19), 0) / 1000, 2) AS VAL_19,
+		ROUND(IFNULL(SUM(C.VAL_20), 0) / 1000, 2) AS VAL_20,
+		ROUND(IFNULL(SUM(C.VAL_21), 0) / 1000, 2) AS VAL_21,
+		ROUND(IFNULL(SUM(C.VAL_22), 0) / 1000, 2) AS VAL_22,
+		ROUND(IFNULL(SUM(C.VAL_23), 0) / 1000, 2) AS VAL_23
+	FROM
+		${dbname}.bems_home AS A
+	LEFT JOIN
+		${dbname}.bems_sensor_solar AS B
+	ON
+		A.COMPLEX_CODE_PK = B.COMPLEX_CODE_PK
+	AND
+		A.HOME_DONG_PK = B.HOME_DONG_PK
+	AND
+		A.HOME_HO_PK = B.HOME_HO_PK
+	LEFT JOIN
+		${dbname}.bems_stat_daily_solar AS C 
+	ON
+		B.SENSOR_SN = C.SENSOR_SN
+	WHERE
+		B.FG_USE = "Y"
+	AND
+		C.VAL_DATE LIKE #{fromdate}
+	AND
+		A.COMPLEX_CODE_PK = #{complexcode}
+	AND
+		B.`INOUT` = "I"
+	UNION ALL
+	SELECT
+		'소비량' AS TITLE,
+		IFNULL(C.VAL_DATE, '00000000') AS VAL_DATE,
+		ROUND(IFNULL(SUM(C.VAL), 0) / 1000, 2) AS VAL,
+		ROUND(IFNULL(SUM(C.VAL_0), 0) / 1000, 2) AS VAL_0,
+		ROUND(IFNULL(SUM(C.VAL_1), 0) / 1000, 2) AS VAL_1,
+		ROUND(IFNULL(SUM(C.VAL_2), 0) / 1000, 2) AS VAL_2,
+		ROUND(IFNULL(SUM(C.VAL_3), 0) / 1000, 2) AS VAL_3,
+		ROUND(IFNULL(SUM(C.VAL_4), 0) / 1000, 2) AS VAL_4,
+		ROUND(IFNULL(SUM(C.VAL_5), 0) / 1000, 2) AS VAL_5,
+		ROUND(IFNULL(SUM(C.VAL_6), 0) / 1000, 2) AS VAL_6,
+		ROUND(IFNULL(SUM(C.VAL_7), 0) / 1000, 2) AS VAL_7,
+		ROUND(IFNULL(SUM(C.VAL_8), 0) / 1000, 2) AS VAL_8,
+		ROUND(IFNULL(SUM(C.VAL_9), 0) / 1000, 2) AS VAL_9,
+		ROUND(IFNULL(SUM(C.VAL_10), 0) / 1000, 2) AS VAL_10,
+		ROUND(IFNULL(SUM(C.VAL_11), 0) / 1000, 2) AS VAL_11,
+		ROUND(IFNULL(SUM(C.VAL_12), 0) / 1000, 2) AS VAL_12,
+		ROUND(IFNULL(SUM(C.VAL_13), 0) / 1000, 2) AS VAL_13,
+		ROUND(IFNULL(SUM(C.VAL_14), 0) / 1000, 2) AS VAL_14,
+		ROUND(IFNULL(SUM(C.VAL_15), 0) / 1000, 2) AS VAL_15,
+		ROUND(IFNULL(SUM(C.VAL_16), 0) / 1000, 2) AS VAL_16,
+		ROUND(IFNULL(SUM(C.VAL_17), 0) / 1000, 2) AS VAL_17,
+		ROUND(IFNULL(SUM(C.VAL_18), 0) / 1000, 2) AS VAL_18,
+		ROUND(IFNULL(SUM(C.VAL_19), 0) / 1000, 2) AS VAL_19,
+		ROUND(IFNULL(SUM(C.VAL_20), 0) / 1000, 2) AS VAL_20,
+		ROUND(IFNULL(SUM(C.VAL_21), 0) / 1000, 2) AS VAL_21,
+		ROUND(IFNULL(SUM(C.VAL_22), 0) / 1000, 2) AS VAL_22,
+		ROUND(IFNULL(SUM(C.VAL_23), 0) / 1000, 2) AS VAL_23
+	FROM
+		${dbname}.bems_home AS A
+	LEFT JOIN
+		${dbname}.bems_sensor_solar AS B
+	ON
+		A.COMPLEX_CODE_PK = B.COMPLEX_CODE_PK
+	AND
+		A.HOME_DONG_PK = B.HOME_DONG_PK
+	AND
+		A.HOME_HO_PK = B.HOME_HO_PK
+	LEFT JOIN
+		${dbname}.bems_stat_daily_solar AS C 
+	ON
+		B.SENSOR_SN = C.SENSOR_SN
+	WHERE
+		B.FG_USE = "Y"
+	AND
+		C.VAL_DATE LIKE #{fromdate}
+	AND
+		A.COMPLEX_CODE_PK = #{complexcode}
+	AND
+		B.`INOUT` = "O"
+	ORDER BY VAL_DATE DESC
+	</select>
+	<!-- 8LINE : SENSOR DATA, 32LINE : SUNLIGHT DATA, 126LINE : SUNLIGHTSTATUS DATA, 176 LINE : INDEPENDENCE DATA, 435 LINE : SUNLIGHTGRAPH DATA -->
+</mapper>

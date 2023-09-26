@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="alarmMapper">
+			
+	<!-- 9LINE : ALARMCOUNTER DATA, 37LINE : ALARMDATA DATA, 95LINE: GETSENSORINFORMATION, 131LINE: EDGEMETERTINSERT,
+			154LINE: GETALARMONOFF, 176LINE: EDGECHECKDATA, 192LINE: UPDATEALARM, 206LINE: UPDATECONFIRM -->
+						
+	<!-- ALARMCOUNTER DATA -->
+	<select id="alarmCounter" parameterType="HashMap" resultType="HashMap">
+	/* 알람 발생 한 갯수 alarmMapper.alarmCounter */
+	SELECT
+		COUNT(A.confirm_yn) AS COUNT
+	FROM
+	(
+		SELECT
+			B.confirm_yn as confirm_yn
+		FROM
+			${dbname}.bems_home AS A
+		LEFT JOIN
+			${dbname}.bems_alarm_log AS B
+		ON
+			A.COMPLEX_CODE_PK = B.COMPLEX_CODE_PK
+		AND
+			A.HOME_DONG_PK = B.HOME_DONG_PK
+		AND
+			A.HOME_HO_PK = B.HOME_HO_PK
+		WHERE
+			A.COMPLEX_CODE_PK = #{complexcode}
+		AND
+			B.confirm_yn = 'n'
+		GROUP BY
+			B.NO_ALARM_LOG_PK
+	)A
+	</select>
+	
+	<!-- ALARMDATA DATA -->
+	<select id="alarmData"  parameterType="HashMap" resultType="HashMap">
+	/* 알람 데이터 alarmMapper.alarmData */
+	SELECT
+		CAST(@ROWNUM := @ROWNUM + 1 AS SIGNED INTEGER) AS num,
+		A.*
+	FROM
+	(
+		SELECT
+			B.home_grp_pk,
+			<if test = "name != null">
+				#{name} as name,
+			</if>
+			C.sensor_sn,
+			C.sensor_type,
+			C.alarm_on_time,
+			C.alarm_msg,
+			C.alarm_off_time,
+			C.alarm_on_off
+		FROM
+			${dbname}.bems_complex AS A
+		LEFT JOIN
+			${dbname}.bems_home AS B
+		ON
+			A.complex_code_pk = B.complex_code_pk
+		LEFT JOIN
+			bems_alarm_log AS C
+		ON
+			B.complex_code_pk = C.complex_code_pk
+		AND
+			B.home_dong_pk = C.home_dong_pk
+		AND
+			B.home_ho_pk = C.home_ho_pk
+		JOIN
+			(SELECT @ROWNUM := 0) D
+		WHERE
+			C.complex_code_pk = #{complexcode}
+		<if test="fromdate != null and todate != null">
+		AND
+			DATE_FORMAT(C.alarm_on_time, '%Y%m%d') <![CDATA[>=]]> #{fromdate}
+		AND
+			DATE_FORMAT(C.alarm_on_time, '%Y%m%d') <![CDATA[<=]]> #{todate}
+		</if>
+		<if test="floor != null">
+		AND
+			B.home_grp_pk = #{floor}
+		</if>
+		<if test="sensor_type != null">
+		AND
+			C.sensor_type = #{sensor_type}
+		</if>
+		<if test="alarm_on_off != null">
+		AND
+			C.alarm_on_off = #{alarm_on_off}
+		</if>
+		<if test="confirm_yn != null">
+		AND
+			C.confirm_yn = "n"
+		</if>
+		GROUP BY C.no_alarm_log_pk
+		ORDER BY C.alarm_off_time DESC, C.sensor_type ASC
+	)A
+	</select>
+	
+	<!-- GETSENSORINFORMATION -->
+	<select id="getSensorInformation"  parameterType="HashMap" resultType="HashMap">
+	/* 알람 미터테이블 별 알람데이터 alarmMapper.getSensorInformation */
+	SELECT
+		A.complex_code_pk AS complex_code_pk,
+		C.sensor_sn AS sensor_sn,
+		A.home_dong_pk AS home_dong_pk,
+		A.home_ho_pk AS home_ho_pk,
+		C.error_code AS error_code,
+		<if test="total_wh != null">
+			C.total_wh AS total_wh
+		</if>
+		<if test="val != null">
+			C.val AS total_wh
+		</if>
+	FROM
+		${dbname}.bems_home AS A
+	LEFT JOIN
+		${dbname}.${sensor} AS B
+	ON
+		A.complex_code_pk = B.complex_code_pk
+	AND
+		A.home_dong_pk = B.home_dong_pk
+	AND
+		A.home_ho_pk = B.home_ho_pk
+	LEFT JOIN
+		${dbname}.${meter} AS C
+	ON
+		B.sensor_sn = C.sensor_sn
+	WHERE
+		C.val_date <![CDATA[<=]]> #{todate}
+	AND
+		B.sensor_sn = #{sensor_sn}
+	ORDER BY C.val_date DESC LIMIT 1
+	</select>
+	
+	<!-- EDGEMETERTINSERT -->
+	<insert id="alarmLogInsert"  parameterType="map">
+	/* 엣지 알람 로그 insert alarmMapper.alarmLogInsert */
+	INSERT ${dbname}.bems_alarm_log
+	(
+	<foreach item="item" index="index" collection="result1" separator=",">
+		${item.name}
+	</foreach>
+		, reg_date
+	)
+	VALUES
+	(
+	<foreach item="item" index="index" collection="result1" separator=",">
+		#{item.val}
+	</foreach>
+		, NOW()
+	)
+	ON DUPLICATE KEY UPDATE
+	<foreach item="item" index="index" collection="result2" separator=",">
+		${item.name} = #{item.val}
+	</foreach>
+	</insert>
+	
+	<!-- GETALARMONOFF -->
+	<select id="getAlarmOnOff"  parameterType="HashMap" resultType="HashMap">
+	/* 알람 발생,해제 체크 데이터 alarmMapper.getAlarmOnOff */
+	SELECT
+		complex_code_pk AS complex_code_pk,
+		sensor_sn AS sensor_sn,
+		alarm_on_off AS alarm_on_off,
+		alarm_on_time AS alarm_on_time,
+		sensor_type
+	FROM
+		${dbname}.bems_alarm_log
+	WHERE
+		complex_code_pk = #{complexcode}
+	AND
+		sensor_type = #{sensor_type}
+	AND
+		alarm_on_off = #{alarm_on_off}
+	AND
+		sensor_sn = #{sensor_sn}
+	AND
+		complex_code_pk = #{complexcode}
+	ORDER BY alarm_on_time DESC
+	</select>
+	
+	<!-- EDGECHECKDATA -->
+	<select id="edgeCheckdata"  parameterType="HashMap" resultType="HashMap">
+	/* 엣지 테이블별 val, total_wh가 있는지 확인하기 alarmMapper.edgeCheckdata */
+	SELECT EXISTS
+	(
+		SELECT 
+			1
+		FROM 
+			Information_schema.columns
+		WHERE 
+			table_name = #{tablename}
+		AND 
+			column_name = #{columnname}
+	) AS flag
+	</select>
+	
+	<!-- UPDATEALARM -->
+	<update id="updateAlarm"  parameterType="map">
+	/* 엣지 알람 해결 및 시간 업데이트 alarmMapper.updateAlarm */
+	UPDATE ${dbname}.bems_alarm_log SET
+		alarm_on_off = #{alarm_on_off},
+		alarm_off_time = #{alarm_off_time}
+	WHERE
+		complex_code_pk = #{complexcode}
+	AND
+		sensor_sn = #{sensor_sn}
+	AND
+		sensor_type = #{sensor_type}
+	</update>
+	
+	<!-- UPDATECONFIRM -->
+	<update id="updateConfirm"  parameterType="map">
+	/* 엣지 알람카운트 초기화 alarmMapper.updateConfirm */
+	UPDATE ${dbname}.bems_alarm_log SET
+		confirm_yn = "y"
+	WHERE
+		complex_code_pk = #{complexcode}
+	</update>
+	
+	<!-- 9LINE : ALARMCOUNTER DATA, 37LINE : ALARMDATA DATA, 95LINE: GETSENSORINFORMATION, 131LINE: EDGEMETERTINSERT,
+			154LINE: GETALARMONOFF, 176LINE: EDGECHECKDATA, 192LINE: UPDATEALARM, 206LINE: UPDATECONFIRM -->
+</mapper>

@@ -1,0 +1,490 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="edgedbMapper">
+			
+	<!-- 11LINE : COLUMNSNAME DATA, 23LINE : EDGESYNCDATA DATA, 52LINE : LBEMSLOGINDATA, 69LINE : EDGEEQUIPMENTSYNC, 86LINE : DAYDATAUPDATE,
+			100LINE : HOURDATAINSERT, 190LINE : EDGETABLENAMES, 196LINE : EDGEBACKUP, 213LINE : EDGESENSORNAME, 236LINE : EDGEHOURDATA,
+			274LINE : EDGEDAYDATA, 344LINE : EDGECHECKDATA, 360LINE : EDGEGETDATE, 373LINE : EDGESETDATE, 396LINE : EDGELOGINDATA,
+			408LINE: NTEKMETERSELECT, 445LINE : RENEWABLESELECT, 461LINE : ELECTRICMETERDATA, 493LINE : EDGEMETERTINSERT-->
+						
+	<!-- LBEMSLOGINDATA -->
+	<select id="getComplexcode"  parameterType="HashMap" resultType="HashMap">
+	/* 엣지 서버별 complexcode 추출 */
+	SELECT
+		complex_code_pk
+	FROM
+		${dbname}.bems_admin
+	WHERE
+		complex_code_pk = "2002"
+	LIMIT 1
+	</select>
+	
+	<!-- COLUMNSNAME DATA -->
+	<select id="columnsName" parameterType="HashMap" resultType="HashMap">
+	/* DB 테이블의 컬럼 네임 출력 edgedbMapper.columnsname */
+	SELECT
+		COLUMN_NAME,
+		COLUMN_KEY
+	FROM
+		INFORMATION_SCHEMA.COLUMNS
+	WHERE
+		TABLE_NAME = #{table_name};
+	</select>
+	
+	<!-- EDGESYNCDATA DATA -->
+	<select id="edgeSyncData"  parameterType="HashMap" resultType="HashMap">
+	/* 엣지 데이터 재전송 edgedbMapper.edgeSyncData */
+	SELECT
+		<foreach item="item" index="index" collection="column_name" separator=",">
+			${item}
+		</foreach>
+	FROM
+		${dbname}.bems_home AS A
+	LEFT JOIN
+		${dbname}.${sensor_name} AS B
+	ON
+		A.COMPLEX_CODE_PK = B.COMPLEX_CODE_PK
+	AND
+		A.HOME_DONG_PK = B.HOME_DONG_PK
+	AND
+		A.HOME_HO_PK = B.HOME_HO_PK
+	LEFT JOIN
+		${dbname}.${table_name} AS C
+	ON
+		B.sensor_sn = C.sensor_sn
+	WHERE
+		C.VAL_DATE <![CDATA[>=]]> #{fromdate}
+	AND
+		C.VAL_DATE <![CDATA[<=]]> #{todate}
+	AND
+		A.complex_code_pk = #{complexcode}
+	</select>
+	
+	<!-- LBEMSLOGINDATA -->
+	<select id="lbemsLoginData"  parameterType="HashMap" resultType="HashMap">
+	/* 엣지 데이터 재전송을 위한 lbems_api에 접속할 id, client_key, iv_key 받아오기 edgedbMapper.edgeloginData */
+	SELECT
+		id,
+		password,
+		client_key,
+		iv_key
+	FROM
+		${dbname}.bems_api_account
+	WHERE
+		target = #{target}
+	</select>
+	
+	<!-- EDGEEQUIPMENTSYNC -->
+	<insert id="edgeEquipmentSync"  parameterType="map">
+	/* 엣지 장비동기화(센서 및 홈) edgedbMapper.edgeEquipmentSync */
+	INSERT ${dbname}.${sensor}
+	<foreach item="item" index="index" collection="result1" open="(" close=")" separator=",">
+		${item.name}
+	</foreach>
+	VALUES
+	<foreach item="item" index="index" collection="result1" open="(" close=")" separator=",">
+		#{item.val}
+	</foreach>
+	ON DUPLICATE KEY UPDATE
+	<foreach item="item" index="index" collection="result2" separator=",">
+		${item.name} = #{item.val}
+	</foreach>
+	</insert>
+	
+	<!-- DAYDATAUPDATE -->
+	<update id="dayDataUpdate"  parameterType="map">
+	/* 엣지 하루의 마지막 값(val_23), 전체값(val) 업데이트 edgedbMapper.edgeEquipmentSync */
+	UPDATE ${dbname}.${table} SET
+		val = ${val},
+		val_23 = ${val_23},
+		total_val = ${total_val},
+		reg_date = NOW()
+	WHERE
+		sensor_sn = #{sensor_sn}
+	AND
+		val_date = #{val_date}
+	</update>
+	
+	<!-- HOURDATAINSERT -->
+	<insert id="hourDataInsert"  parameterType="map">
+	/* 엣지 시간별 값 insert edgedbMapper.hourDataInsert */
+	INSERT ${dbname}.${table}
+	(
+	<foreach item="item" index="index" collection="result1" separator=",">
+		${item.name}
+	</foreach>
+		, reg_date
+	)
+	VALUES
+	(
+	<foreach item="item" index="index" collection="result1" separator=",">
+		#{item.val}
+	</foreach>
+		, NOW()
+	)
+	ON DUPLICATE KEY UPDATE
+	<foreach item="item" index="index" collection="result2" separator=",">
+		${item.name} = #{item.val}
+	</foreach>
+	</insert>
+	
+	<!-- EDGETABLENAMES -->
+	<select id="edgeTableNames"  parameterType="HashMap" resultType="HashMap">
+	/* 엣지 테이블 이름 가져오기 edgedbMapper.edgeTableNames */
+	SHOW TABLES
+	</select>
+	
+	<!-- EDGEBACKUP -->
+	<delete id="edgeBackUp"  parameterType="map">
+	/* 엣지 백업기간 설정 확인 후 삭제 edgedbMapper.edgeBackup */
+		<if test="val_date != null">
+			DELETE FROM ${dbname}.${tablename} WHERE val_date<![CDATA[<]]>#{val_date}
+		</if>
+		<if test="log_date != null">
+			DELETE FROM ${dbname}.${tablename} WHERE log_date<![CDATA[<]]>#{log_date}
+		</if>
+		<if test="alarm_off_time != null">
+			DELETE FROM ${dbname}.${tablename} WHERE alarm_off_time<![CDATA[<]]>#{alarm_off_time}
+		</if>
+		<if test="reg_date != null">
+			DELETE FROM ${dbname}.${tablename} WHERE reg_date<![CDATA[<]]>#{reg_date}
+		</if>
+	</delete>
+	
+	<!-- EDGESENSORNAME -->
+	<select id="edgeSensorName"  parameterType="HashMap" resultType="HashMap">
+	/* 엣지 센서 이름 가져오기 edgedbMapper.edgeSensorName */
+	SELECT
+		B.sensor_sn
+	FROM
+		${dbname}.bems_home AS A
+	LEFT JOIN
+		${dbname}.${sensor} AS B
+	ON
+		A.complex_code_pk = B.complex_code_pk
+	AND
+		A.home_dong_pk = B.home_dong_pk
+	AND
+		A.home_ho_pk = B.home_ho_pk
+	WHERE
+		B.complex_code_pk = #{complexcode}
+	AND
+		B.fg_use = "y"
+	AND
+		A.home_grp_pk NOT IN ("0M", "ALL")
+	</select>
+	
+	<!-- EDGEHOURDATA -->
+	<select id="edgeHourData"  parameterType="HashMap" resultType="HashMap">
+	/* 엣지 하루 시간별 데이터 edgedbMapper.edgeHourData */
+	SELECT
+		C.sensor_sn,
+		SUBSTRING(C.val_date, 1, 10) AS val_date,
+		SUBSTRING(C.val_date, 1, 8) AS day,
+		SUBSTRING(C.val_date, 9, 2) AS hour,
+		IFNULL(MAX(C.total_wh) - MIN(C.total_wh), 0) AS val
+	FROM
+		${dbname}.bems_home AS A
+	LEFT JOIN
+		${dbname}.${sensor} AS B
+	ON
+		A.complex_code_pk = B.complex_code_pk
+	AND
+		A.home_dong_pk = B.home_dong_pk
+	AND
+		A.home_ho_pk = B.home_ho_pk
+	LEFT JOIN
+		${dbname}.${meter} AS C
+	ON
+		B.sensor_sn = C.sensor_sn
+	WHERE
+		C.val_date <![CDATA[>=]]> #{fromdate}
+	AND
+		C.val_date <![CDATA[<=]]> #{todate}
+	AND
+		C.sensor_sn = #{sensor_sn}
+	GROUP BY
+		C.sensor_sn, SUBSTRING(C.val_date, 1, 10)
+	ORDER BY
+		C.sensor_sn, SUBSTRING(C.val_date, 1, 10)
+	</select>
+	
+	<!-- EDGEDAYDATA -->
+	<select id="edgeDayData"  parameterType="HashMap" resultType="HashMap">
+	/* 엣지 하루의 마지막 값(val_23), 전체값(val) 확인 edgedbMapper.edgeDayData */
+	SELECT
+		C.sensor_sn,
+		SUBSTR(MAX(C.val_date), 1, 8) AS val_date,
+        IFNULL(MAX(C.total_wh) - MIN(C.total_wh), 0) AS val,
+        IFNULL(MAX(C.total_wh), 0) AS total_val,
+        IFNULL(D.val_23, 0) AS val_23
+    FROM
+    	${dbname}.bems_home AS A
+    LEFT JOIN
+      	${dbname}.${sensor} AS B
+    ON
+       	A.complex_code_pk = B.complex_code_pk
+    AND
+       	A.home_dong_pk = B.home_dong_pk 
+    AND
+       	A.home_ho_pk = B.home_ho_pk
+    LEFT JOIN
+      	${dbname}.${meter} AS C
+    ON
+       	B.sensor_sn = C.sensor_sn
+    LEFT JOIN
+       	(
+       		SELECT
+				C.sensor_sn,
+				SUBSTRING(C.val_date, 1, 10) AS val_date,
+				MAX(C.total_wh) - MIN(C.total_wh) AS val_23,
+				SUBSTR(MAX(C.val_date), 9, 2) AS hour
+			FROM 
+				bems_home AS A
+			LEFT JOIN 
+				${sensor} AS B
+			ON 
+				A.complex_code_pk = B.complex_code_pk
+			AND
+				A.home_dong_pk = B.home_dong_pk 
+			AND
+				A.home_ho_pk = B.home_ho_pk  
+			LEFT JOIN
+				${meter} AS C
+			ON
+				B.sensor_sn = C.sensor_sn
+			WHERE C.sensor_sn = #{sensor_sn}
+			AND C.val_date <![CDATA[>=]]> #{fromdate}
+			AND C.val_date <![CDATA[<=]]> #{todate}
+			GROUP BY C.sensor_sn, SUBSTRING(C.val_date, 1, 10)
+			ORDER BY C.sensor_sn, SUBSTRING(C.val_date, 1, 10)
+       	)D
+    ON 
+    	C.sensor_sn = D.sensor_sn
+    WHERE
+    	C.val_date <![CDATA[>=]]> #{fivefromdate}
+    AND
+      	C.val_date <![CDATA[<=]]> #{todaytodate}
+    AND
+      	C.sensor_sn = #{sensor_sn}
+    AND
+        D.hour = "23"
+    GROUP BY
+      	C.sensor_sn
+	</select>
+	
+	<!-- EDGECHECKDATA -->
+	<select id="edgeCheckdata"  parameterType="HashMap" resultType="HashMap">
+	/* 엣지 테이블별 val_date가 있는지 확인하기 edgedbMapper.edgeCheckdata */
+	SELECT EXISTS
+	(
+		SELECT 
+			1
+		FROM 
+			Information_schema.columns
+		WHERE 
+			table_name = #{tablename}
+		AND 
+			column_name = #{columnname}
+	) AS flag
+	</select>
+	
+	<!-- EDGEGETDATE -->
+	<select id="edgeGetDate"  parameterType="HashMap" resultType="HashMap">
+	/* 엣지 백업기간 설정값 가져오기 edgedbMapper.edgeGetDate */
+	SELECT
+		set_backup_info AS setdate
+	FROM
+		${dbname}.bems_backup_info
+	WHERE
+		complex_code_pk = #{complexcode}
+	</select>
+	
+	<!-- EDGESETDATE -->
+	<insert id="edgeSetDate"  parameterType="map">
+	/* 엣지 백업기간 설정값 업데이트 edgedbMapper.edgeSetDate */
+	INSERT ${dbname}.bems_backup_info
+	(
+	<foreach item="item" index="index" collection="result1" separator=",">
+		${item.name}
+	</foreach>
+		, reg_date
+	)
+	VALUES
+	(
+	<foreach item="item" index="index" collection="result1" separator=",">
+		#{item.val}
+	</foreach>
+		, NOW()
+	)
+	ON DUPLICATE KEY UPDATE
+	<foreach item="item" index="index" collection="result2" separator=",">
+		${item.name} = #{item.val}
+	</foreach>
+	</insert>
+	
+	<!-- EDGELOGINDATA -->
+	<select id="edgeLoginData"  parameterType="HashMap" resultType="HashMap">
+	/* 엣지 관리자 로그인 edgedbMapper.edgeloginData */
+	SELECT
+		admin_id AS id,
+		password,
+		first_login_date,
+		login_fail_cnt,
+		last_login_date
+	FROM
+		${dbname}.bems_admin
+	WHERE
+		admin_id = #{id}
+	AND
+		complex_code_pk = #{complexcode}
+	</select>
+	
+	<!-- EDGELOGINUPDATE -->
+	<update id="edgeLoginUpdate"  parameterType="map">
+	/* 엣지 로그인 정보 업데이트 edgedbMapper.edgeLoginUpdate */
+	UPDATE ${dbname}.bems_admin SET
+		<if test = "login_fail_cnt != null">
+		login_fail_cnt = ${login_fail_cnt}
+		</if>
+		<if test = "first_login_date">
+		first_login_date = #{first_login_date},
+		</if>
+		<if test = "last_login_date">
+		last_login_date = #{last_login_date}
+		</if>
+	WHERE
+		admin_id = #{id}
+	AND
+		complex_code_pk = #{complexcode}
+	</update>
+	
+	<!-- GETFLOORNAME -->
+	<select id="getFloorname"  parameterType="HashMap" resultType="HashMap">
+	/* home테이블에서 층 이름 가져오기 edgedbMapper.getFloorname */
+	SELECT
+		A.home_grp_pk AS home_grp_pk
+	FROM
+		${dbname}.bems_home AS A
+	WHERE
+		A.home_grp_pk NOT IN ("0M", "ALL")
+	AND
+		A.complex_code_pk = #{complexcode}
+	GROUP BY A.home_grp_pk
+	</select>
+	
+	<!-- GETALLSENSORNAME -->
+	<select id="getAllSensorName"  parameterType="HashMap" resultType="HashMap">
+	/* electric테이블에서 전체전력센서만 가져오기 edgedbMapper.getAllSensorName */
+	SELECT
+		B.sensor_sn AS sensor_sn,
+		A.home_grp_pk AS home_grp_pk,
+		A.home_key_pk AS home_key_pk
+	FROM
+		${dbname}.bems_home AS A
+	LEFT JOIN
+		${dbname}.${sensor} AS B
+	ON
+		A.COMPLEX_CODE_PK = B.COMPLEX_CODE_PK
+	AND
+		A.HOME_DONG_PK = B.HOME_DONG_PK
+	AND
+		A.HOME_HO_PK = B.HOME_HO_PK
+	WHERE
+		B.complex_code_pk = #{complexcode}
+	AND
+		B.fg_use = "y"
+	<if test = "key_pk != null">
+	AND
+		A.home_key_pk like CONCAT(#{key_pk}, '%')
+	</if>
+	</select>
+	
+	<!-- NTEKMETERSELECT -->
+	<select id="ntekMeterSelect"  parameterType="HashMap" resultType="HashMap">
+	/* ntek테이블에서 데이터 가져오기 edgedbMapper.ntekMeterSelect */
+	SELECT
+		B.sensor_sn AS sensor_sn,
+		C.val_date AS val_date,
+		IFNULL(C.watt, 0) AS current_w,
+		IFNULL(format(C.kwh_imp, 3), 0) AS total_wh,
+		IFNULL(C.error_code, 0) AS error_code,
+		IFNULL(C.pf, 0) AS pf
+	FROM
+		${dbname}.bems_home as A
+	LEFT JOIN
+		${dbname}.${sensor} as B
+	ON
+		A.complex_code_pk = B.complex_code_pk
+	AND
+		A.home_dong_pk = B.home_dong_pk
+	AND
+		A.home_ho_pk = B.home_ho_pk
+	LEFT JOIN
+		${dbname}.ntek_meter_electric AS C
+	ON
+		B.sensor_sn = C.sensor_sn
+	WHERE
+		A.complex_code_pk = #{complexcode}
+	<if test = "home_grp_pk != null">
+	AND
+		A.home_grp_pk = #{home_grp_pk}
+	</if>
+	<if test = "fromdate != null">
+	AND
+		C.val_date <![CDATA[>=]]> #{fromdate}
+	</if>
+	AND
+		C.val_date <![CDATA[<=]]> #{todate}
+	<if test = "sensor_sn != null">
+	AND
+		B.sensor_sn = #{sensor_sn}
+	ORDER BY C.val_date DESC LIMIT 1
+	</if>
+	</select>
+	
+	<!-- RENEWABLESELECT -->
+	<select id="renewableSelect"  parameterType="HashMap" resultType="HashMap">
+	/* ntek테이블에서 신재생 에너지 가져오기 edgedbMapper.renewableSelect */
+	SELECT
+		sensor_sn as sensor_sn,
+		val_date as val_date,
+		IFNULL(watt, 0) as current_w,
+		IFNULL(format(kwh_imp, 3), 0) as total_wh,
+		error_code as error_code
+	FROM
+		${dbname}.ntek_meter_electric
+	WHERE
+		sensor_sn = #{sensor_sn}
+	ORDER BY val_date DESC LIMIT 1
+	</select>
+	
+	<!-- EDGEMETERTINSERT -->
+	<insert id="edgeMetertInsert"  parameterType="map">
+	/* 엣지 meter 테이블 insert edgedbMapper.edgeMetertInsert */
+	INSERT ${dbname}.${meter}
+	(
+	<foreach item="item" index="index" collection="result1" separator=",">
+		${item.name}
+	</foreach>
+		, reg_date
+	)
+	VALUES
+	(
+	<foreach item="item" index="index" collection="result1" separator=",">
+		#{item.val}
+	</foreach>
+		, NOW()
+	)
+	ON DUPLICATE KEY UPDATE
+	<foreach item="item" index="index" collection="result2" separator=",">
+		${item.name} = #{item.val}
+	</foreach>
+	</insert>
+	
+	<!-- 11LINE : COLUMNSNAME DATA, 23LINE : EDGESYNCDATA DATA, 52LINE : LBEMSLOGINDATA, 69LINE : EDGEEQUIPMENTSYNC, 86LINE : DAYDATAUPDATE,
+			100LINE : HOURDATAINSERT, 190LINE : EDGETABLENAMES, 196LINE : EDGEBACKUP, 213LINE : EDGESENSORNAME, 236LINE : EDGEHOURDATA,
+			274LINE : EDGEDAYDATA, 344LINE : EDGECHECKDATA, 360LINE : EDGEGETDATE, 373LINE : EDGESETDATE, 396LINE : EDGELOGINDATA,
+			408LINE: NTEKMETERSELECT, 445LINE : RENEWABLESELECT, 461LINE : ELECTRICMETERDATA, 493LINE : EDGEMETERTINSERT-->
+</mapper>

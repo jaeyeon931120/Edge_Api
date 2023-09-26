@@ -1,0 +1,91 @@
+%!Adobe-FontList 1.14
+%Locale:0x412
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:NanumSquareB
+FamilyName:NanumSquare
+StyleName:Bold
+FullName:NanumSquare Bold
+MenuName:나눔스퀘어 Bold
+StyleBits:0
+FamilyNameNative:나눔스퀘어
+StyleNameNative:Bold
+FullNameNative:나눔스퀘어 Bold
+WritingScript:Korean
+OutlineFileName:C:\0_디자인데이타\손성은\2]dashboard_design\2017.08.17_한양에스앤씨\2017.9.19_추가작업\작업\Font\NanumSquareB.ttf
+DataFormat:sfntData
+FileLength:733500
+FileModTime:1474622556
+WeightClass:700
+WidthClass:5
+AngleClass:0
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:NanumSquareEB
+FamilyName:NanumSquare
+StyleName:ExtraBold
+FullName:NanumSquare ExtraBold
+MenuName:나눔스퀘어 ExtraBold
+StyleBits:0
+FamilyNameNative:나눔스퀘어
+StyleNameNative:ExtraBold
+FullNameNative:나눔스퀘어 ExtraBold
+WritingScript:Korean
+OutlineFileName:C:\0_디자인데이타\손성은\2]dashboard_design\2017.08.17_한양에스앤씨\2017.9.19_추가작업\작업\Font\NanumSquareEB.ttf
+DataFormat:sfntData
+FileLength:726684
+FileModTime:1474622556
+WeightClass:800
+WidthClass:5
+AngleClass:0
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:NanumSquareL
+FamilyName:NanumSquare
+StyleName:Light
+FullName:NanumSquare Light
+MenuName:나눔스퀘어 Light
+StyleBits:0
+FamilyNameNative:나눔스퀘어
+StyleNameNative:Light
+FullNameNative:나눔스퀘어 Light
+WritingScript:Korean
+OutlineFileName:C:\0_디자인데이타\손성은\2]dashboard_design\2017.08.17_한양에스앤씨\2017.9.19_추가작업\작업\Font\NanumSquareL.ttf
+DataFormat:sfntData
+FileLength:750932
+FileModTime:1474622556
+WeightClass:300
+WidthClass:5
+AngleClass:0
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:NanumSquareR
+FamilyName:NanumSquare
+StyleName:Regular
+FullName:NanumSquare Regular
+MenuName:나눔스퀘어
+StyleBits:0
+FamilyNameNative:나눔스퀘어
+StyleNameNative:Regular
+FullNameNative:나눔스퀘어 Regular
+WritingScript:Korean
+OutlineFileName:C:\0_디자인데이타\손성은\2]dashboard_design\2017.08.17_한양에스앤씨\2017.9.19_추가작업\작업\Font\NanumSquareR.ttf
+DataFormat:sfntData
+FileLength:723640
+FileModTime:1474622556
+WeightClass:400
+WidthClass:5
+AngleClass:0
+%EndFont
+

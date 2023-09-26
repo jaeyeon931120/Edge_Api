@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="energystatusMapper">
+			
+	<!-- 8LINE : FLOORINFO DATA, 32LINE : HOUR DATA, 88LINE : 5MIN DATA -->
+	
+	<!-- FLOORINFO DATA -->
+	<select id="energystatusFloor" parameterType="HashMap" resultType="HashMap">
+	/*에너지사용현황 층별정보 energystatusMapper.energystatusFloor*/
+	SELECT
+		A.HOME_GRP_PK AS HOME_GRP_PK
+	FROM
+		${dbname}.bems_home AS A
+	LEFT JOIN
+		${dbname}.bems_sensor_electric AS B
+	ON
+		A.COMPLEX_CODE_PK = B.COMPLEX_CODE_PK
+	AND
+		A.HOME_DONG_PK = B.HOME_DONG_PK
+	AND
+		A.HOME_HO_PK = B.HOME_HO_PK
+	WHERE
+		B.FG_USE = 'Y'
+	AND
+		A.COMPLEX_CODE_PK = #{complexcode}
+	AND
+		(A.HOME_GRP_PK like "%F" OR A.HOME_GRP_PK like "PH" OR A.HOME_GRP_PK like "B%")
+	GROUP BY A.HOME_GRP_PK
+	</select>
+						
+	<!-- HOUR DATA -->
+	<select id="energystatusHourdata" parameterType="HashMap" resultType="HashMap">
+	/*에너지현황 시간별 현황 energystatusMapper.energystatusHourdata*/
+	SELECT
+		IFNULL(C.VAL_DATE, '00000000') AS VAL_DATE,
+		ROUND(IFNULL(SUM(C.VAL_0) / 1000, 0), 2) AS VAL_0,
+		ROUND(IFNULL(SUM(C.VAL_1) / 1000, 0), 2) AS VAL_1,
+		ROUND(IFNULL(SUM(C.VAL_2) / 1000, 0), 2) AS VAL_2,
+		ROUND(IFNULL(SUM(C.VAL_3) / 1000, 0), 2) AS VAL_3,
+		ROUND(IFNULL(SUM(C.VAL_4) / 1000, 0), 2) AS VAL_4,
+		ROUND(IFNULL(SUM(C.VAL_5) / 1000, 0), 2) AS VAL_5,
+		ROUND(IFNULL(SUM(C.VAL_6) / 1000, 0), 2) AS VAL_6,
+		ROUND(IFNULL(SUM(C.VAL_7) / 1000, 0), 2) AS VAL_7,
+		ROUND(IFNULL(SUM(C.VAL_8) / 1000, 0), 2) AS VAL_8,
+		ROUND(IFNULL(SUM(C.VAL_9) / 1000, 0), 2) AS VAL_9,
+		ROUND(IFNULL(SUM(C.VAL_10) / 1000, 0), 2) AS VAL_10,
+		ROUND(IFNULL(SUM(C.VAL_11) / 1000, 0), 2) AS VAL_11,
+		ROUND(IFNULL(SUM(C.VAL_12) / 1000, 0), 2) AS VAL_12,
+		ROUND(IFNULL(SUM(C.VAL_13) / 1000, 0), 2) AS VAL_13,
+		ROUND(IFNULL(SUM(C.VAL_14) / 1000, 0), 2) AS VAL_14,
+		ROUND(IFNULL(SUM(C.VAL_15) / 1000, 0), 2) AS VAL_15,
+		ROUND(IFNULL(SUM(C.VAL_16) / 1000, 0), 2) AS VAL_16,
+		ROUND(IFNULL(SUM(C.VAL_17) / 1000, 0), 2) AS VAL_17,
+		ROUND(IFNULL(SUM(C.VAL_18) / 1000, 0), 2) AS VAL_18,
+		ROUND(IFNULL(SUM(C.VAL_19) / 1000, 0), 2) AS VAL_19,
+		ROUND(IFNULL(SUM(C.VAL_20) / 1000, 0), 2) AS VAL_20,
+		ROUND(IFNULL(SUM(C.VAL_21) / 1000, 0), 2) AS VAL_21,
+		ROUND(IFNULL(SUM(C.VAL_22) / 1000, 0), 2) AS VAL_22,
+		ROUND(IFNULL(SUM(C.VAL_23) / 1000, 0), 2) AS VAL_23
+	FROM
+		${dbname}.bems_home AS A
+	LEFT JOIN
+		${dbname}.bems_sensor_electric AS B
+	ON
+		A.COMPLEX_CODE_PK = B.COMPLEX_CODE_PK
+	AND
+		A.HOME_DONG_PK = B.HOME_DONG_PK
+	AND
+		A.HOME_HO_PK = B.HOME_HO_PK
+	LEFT JOIN
+		${dbname}.bems_stat_daily_electric AS C 
+	ON
+		B.SENSOR_SN = C.SENSOR_SN
+	WHERE
+		B.FG_USE = "Y"
+	AND
+		C.VAL_DATE LIKE #{fromdate}
+	AND
+		A.COMPLEX_CODE_PK = #{complexcode}
+	<if test = "floor != null">
+	AND
+		B.SENSOR_SN = #{floor}
+	</if>
+	ORDER BY C.VAL_DATE DESC
+	</select>
+	
+	<!-- 5MIN DATA -->
+	<select id="energystatus5mindata"  parameterType="HashMap" resultType="HashMap">
+	/*에너지현황 5분별 현황 energystatusMapper.energystatus5mindata*/
+		SELECT 
+			IFNULL(CONVERT(A.DATE, CHAR), '00000000') AS VAL_DATE,
+			CONCAT(ROUND(IFNULL(SUM(A.VAL2), 0) / 1000, 2), "0") AS VAL,
+			IFNULL(SUBSTR(CONVERT(A.DATE, CHAR), 15, 2), '00') AS MIN
+		FROM
+		(
+		SELECT
+			C.SENSOR_SN,
+			FROM_UNIXTIME(CAST(UNIX_TIMESTAMP(C.VAL_DATE)/300 AS SIGNED) * 300) AS DATE,
+			IFNULL(C.VAL_DATE, '00000000000000') AS VAL_DATE,
+			CASE WHEN C.TOTAL_WH - MAX(D.TOTAL_WH) > 0 THEN C.TOTAL_WH - MAX(D.TOTAL_WH) ELSE 0 END AS VAL2
+		FROM
+			${dbname}.bems_home AS A
+		LEFT JOIN
+			${dbname}.bems_sensor_electric AS B
+		ON
+			A.COMPLEX_CODE_PK = B.COMPLEX_CODE_PK
+		AND
+			A.HOME_DONG_PK = B.HOME_DONG_PK
+		AND
+			A.HOME_HO_PK = B.HOME_HO_PK
+		LEFT JOIN
+			${dbname}.bems_meter_electric AS C
+		ON
+			C.SENSOR_SN = B.SENSOR_SN
+		LEFT OUTER JOIN
+		(
+			SELECT
+				B.SENSOR_SN,
+				B.VAL_DATE,
+				B.TOTAL_WH
+			FROM
+				${dbname}.bems_sensor_electric AS A
+			LEFT JOIN
+				${dbname}.bems_meter_electric AS B
+			ON
+				A.SENSOR_SN = B.SENSOR_SN
+			WHERE
+				B.VAL_DATE <![CDATA[>=]]> #{fiveminfromdate}
+			AND
+				B.VAL_DATE <![CDATA[<=]]> #{todate}
+			AND
+				A.COMPLEX_CODE_PK = #{complexcode}
+			<if test = "floor != null">
+			AND
+				A.SENSOR_SN = #{floor}
+			</if>
+			GROUP BY B.VAL_DATE, B.SENSOR_SN
+			ORDER BY B.VAL_DATE ASC
+		)D
+		ON
+			C.SENSOR_SN = D.SENSOR_SN
+		AND
+			FROM_UNIXTIME(CAST(UNIX_TIMESTAMP(C.VAL_DATE)/300 AS SIGNED) * 300) > D.VAL_DATE
+		WHERE
+			B.FG_USE = "Y"
+		AND
+			A.COMPLEX_CODE_PK = #{complexcode}
+		AND
+			C.VAL_DATE <![CDATA[>=]]> #{fromdate}
+		AND
+			C.VAL_DATE <![CDATA[<=]]> #{todate}
+		<if test = "floor != null">
+		AND
+			B.SENSOR_SN = #{floor}
+		</if>
+		GROUP BY C.SENSOR_SN, FROM_UNIXTIME(CAST(UNIX_TIMESTAMP(C.VAL_DATE)/300 AS SIGNED) * 300)
+		)A
+		GROUP BY A.DATE
+	</select>
+	<!-- 8LINE : FLOORINFO DATA, 32LINE : HOUR DATA, 88LINE : 5MIN DATA -->
+</mapper>

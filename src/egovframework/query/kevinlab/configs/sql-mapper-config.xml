@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <settings>
+        <setting name="mapUnderscoreToCamelCase" value="true" />
+    </settings>
+
+    <typeAliases>
+		<typeAlias alias="egovMap" 		type="egovframework.rte.psl.dataaccess.util.EgovMap"/>
+		<typeAlias alias="int"				type="java.lang.Integer"/>
+		<typeAlias alias="str"				type="java.lang.String"/>
+		<typeAlias alias="long"				type="java.lang.Long"/>
+		<typeAlias alias="map"				type="java.util.Map"/>
+
+<!-- 		<typeAlias alias="userDto"			type="egovframework.kevinlab.dto.UserDto"/> -->
+<!-- 		<typeAlias alias="userMenuDto"		type="egovframework.kevinlab.dto.UserMenuDto"/> -->
+<!-- 		<typeAlias alias="commonDto"		type="egovframework.kevinlab.dto.CommonDto"/> -->
+
+<!-- 		<typeAlias alias="pivotDto"			type="egovframework.kevinlab.dto.PivotDto"/> -->
+<!-- 		<typeAlias alias="treeDto"			type="egovframework.kevinlab.dto.TreeDto"/> -->
+
+<!-- 		<typeAlias alias="m01VO" 			type="egovframework.kevinlab.dto.m.M01VO"/> -->
+<!-- 		<typeAlias alias="m02VO" 			type="egovframework.kevinlab.dto.m.M02VO"/>		 -->
+<!-- 		<typeAlias alias="APIVO" 			type="egovframework.kevinlab.dto.api.APIVO"/> -->
+    </typeAliases>
+</configuration>

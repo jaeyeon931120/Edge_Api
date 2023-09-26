@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="predictionMapper">
+			
+	<!-- 8LINE : SENSOR DATA, 32LINE : SUNLIGHT DATA, 126LINE : SUNLIGHTSTATUS DATA, 176 LINE : INDEPENDENCE DATA, 435 LINE : SUNLIGHTGRAPH DATA -->
+				
+	<!-- prediction 예상 사용량 -->
+	<select id="predictionTop2" parameterType="HashMap" resultType="HashMap">	
+	/*임시사용 일일 predictionMapper.predictionTop*/	
+	SELECT VAL_DATE
+	     , ifnull(val_0 + val_1 + val_2 + val_3 + val_4 + val_5 + val_6 + val_7 + val_8 + val_9 + val_10 +val_11 + val_12
+	      + val_13 + val_14 + val_15 + val_16 + val_17 + val_18 + val_19 + val_20 + val_21 + val_22 + val_23, 0) as DAY_USAGE
+	FROM (
+	    SELECT
+		    IFNULL(C.VAL_DATE, '00000000') AS VAL_DATE,
+		    ROUND(IFNULL(SUM(C.VAL_0) / 1000, 0), 2) AS VAL_0,
+		    ROUND(IFNULL(SUM(C.VAL_1) / 1000, 0), 2) AS VAL_1,
+		    ROUND(IFNULL(SUM(C.VAL_2) / 1000, 0), 2) AS VAL_2,
+		    ROUND(IFNULL(SUM(C.VAL_3) / 1000, 0), 2) AS VAL_3,
+		    ROUND(IFNULL(SUM(C.VAL_4) / 1000, 0), 2) AS VAL_4,
+		    ROUND(IFNULL(SUM(C.VAL_5) / 1000, 0), 2) AS VAL_5,
+		    ROUND(IFNULL(SUM(C.VAL_6) / 1000, 0), 2) AS VAL_6,
+		    ROUND(IFNULL(SUM(C.VAL_7) / 1000, 0), 2) AS VAL_7,
+		    ROUND(IFNULL(SUM(C.VAL_8) / 1000, 0), 2) AS VAL_8,
+		    ROUND(IFNULL(SUM(C.VAL_9) / 1000, 0), 2) AS VAL_9,
+		    ROUND(IFNULL(SUM(C.VAL_10) / 1000, 0), 2) AS VAL_10,
+		    ROUND(IFNULL(SUM(C.VAL_11) / 1000, 0), 2) AS VAL_11,
+		    ROUND(IFNULL(SUM(C.VAL_12) / 1000, 0), 2) AS VAL_12,
+		    ROUND(IFNULL(SUM(C.VAL_13) / 1000, 0), 2) AS VAL_13,
+		    ROUND(IFNULL(SUM(C.VAL_14) / 1000, 0), 2) AS VAL_14,
+		    ROUND(IFNULL(SUM(C.VAL_15) / 1000, 0), 2) AS VAL_15,
+		    ROUND(IFNULL(SUM(C.VAL_16) / 1000, 0), 2) AS VAL_16,
+		    ROUND(IFNULL(SUM(C.VAL_17) / 1000, 0), 2) AS VAL_17,
+		    ROUND(IFNULL(SUM(C.VAL_18) / 1000, 0), 2) AS VAL_18,
+		    ROUND(IFNULL(SUM(C.VAL_19) / 1000, 0), 2) AS VAL_19,
+		    ROUND(IFNULL(SUM(C.VAL_20) / 1000, 0), 2) AS VAL_20,
+		    ROUND(IFNULL(SUM(C.VAL_21) / 1000, 0), 2) AS VAL_21,
+		    ROUND(IFNULL(SUM(C.VAL_22) / 1000, 0), 2) AS VAL_22,
+		    ROUND(IFNULL(SUM(C.VAL_23) / 1000, 0), 2) AS VAL_23
+		FROM bems_home AS A
+		LEFT JOIN bems_sensor_electric AS B
+		  ON A.COMPLEX_CODE_PK = B.COMPLEX_CODE_PK
+		 AND A.HOME_DONG_PK = B.HOME_DONG_PK
+		 AND A.HOME_HO_PK = B.HOME_HO_PK
+		LEFT JOIN bems_stat_daily_electric AS C
+		  ON B.SENSOR_SN = C.SENSOR_SN
+		WHERE B.FG_USE = 'Y'
+		  AND C.VAL_DATE = date_format(now(), '%Y%m%d')
+		  AND A.COMPLEX_CODE_PK = '2002'
+		  AND B.SENSOR_SN = '2002_ALL'
+	)D
+	</select>
+						
+	<!-- prediction 예상 사용량 -->
+	<select id="predictionTop" parameterType="HashMap" resultType="HashMap">	
+	/*임시사용 일일 predictionMapper.predictionTop*/	
+    SELECT
+	    IFNULL(C.VAL_DATE, '00000000') AS VAL_DATE,
+	    ROUND(IFNULL(SUM(C.VAL_0) / 1000, 0), 2) AS VAL_0,
+	    ROUND(IFNULL(SUM(C.VAL_1) / 1000, 0), 2) AS VAL_1,
+	    ROUND(IFNULL(SUM(C.VAL_2) / 1000, 0), 2) AS VAL_2,
+	    ROUND(IFNULL(SUM(C.VAL_3) / 1000, 0), 2) AS VAL_3,
+	    ROUND(IFNULL(SUM(C.VAL_4) / 1000, 0), 2) AS VAL_4,
+	    ROUND(IFNULL(SUM(C.VAL_5) / 1000, 0), 2) AS VAL_5,
+	    ROUND(IFNULL(SUM(C.VAL_6) / 1000, 0), 2) AS VAL_6,
+	    ROUND(IFNULL(SUM(C.VAL_7) / 1000, 0), 2) AS VAL_7,
+	    ROUND(IFNULL(SUM(C.VAL_8) / 1000, 0), 2) AS VAL_8,
+	    ROUND(IFNULL(SUM(C.VAL_9) / 1000, 0), 2) AS VAL_9,
+	    ROUND(IFNULL(SUM(C.VAL_10) / 1000, 0), 2) AS VAL_10,
+	    ROUND(IFNULL(SUM(C.VAL_11) / 1000, 0), 2) AS VAL_11,
+	    ROUND(IFNULL(SUM(C.VAL_12) / 1000, 0), 2) AS VAL_12,
+	    ROUND(IFNULL(SUM(C.VAL_13) / 1000, 0), 2) AS VAL_13,
+	    ROUND(IFNULL(SUM(C.VAL_14) / 1000, 0), 2) AS VAL_14,
+	    ROUND(IFNULL(SUM(C.VAL_15) / 1000, 0), 2) AS VAL_15,
+	    ROUND(IFNULL(SUM(C.VAL_16) / 1000, 0), 2) AS VAL_16,
+	    ROUND(IFNULL(SUM(C.VAL_17) / 1000, 0), 2) AS VAL_17,
+	    ROUND(IFNULL(SUM(C.VAL_18) / 1000, 0), 2) AS VAL_18,
+	    ROUND(IFNULL(SUM(C.VAL_19) / 1000, 0), 2) AS VAL_19,
+	    ROUND(IFNULL(SUM(C.VAL_20) / 1000, 0), 2) AS VAL_20,
+	    ROUND(IFNULL(SUM(C.VAL_21) / 1000, 0), 2) AS VAL_21,
+	    ROUND(IFNULL(SUM(C.VAL_22) / 1000, 0), 2) AS VAL_22,
+	    ROUND(IFNULL(SUM(C.VAL_23) / 1000, 0), 2) AS VAL_23
+	FROM bems_home AS A
+	LEFT JOIN bems_sensor_electric AS B
+	  ON A.COMPLEX_CODE_PK = B.COMPLEX_CODE_PK
+	 AND A.HOME_DONG_PK = B.HOME_DONG_PK
+	 AND A.HOME_HO_PK = B.HOME_HO_PK
+	LEFT JOIN bems_stat_daily_electric AS C
+	  ON B.SENSOR_SN = C.SENSOR_SN
+	WHERE B.FG_USE = 'Y'
+	  AND C.VAL_DATE = date_format(now(), '%Y%m%d')	  
+	  AND A.COMPLEX_CODE_PK = #{complexcode}
+	  <if test = "floor != null">
+		  AND B.SENSOR_SN = #{floor}
+      </if>
+	union all
+    SELECT
+	    IFNULL(C.VAL_DATE, '00000000') AS VAL_DATE,
+	    ROUND(IFNULL(SUM(C.VAL_0) / 1000, 0), 2) AS VAL_0,
+	    ROUND(IFNULL(SUM(C.VAL_1) / 1000, 0), 2) AS VAL_1,
+	    ROUND(IFNULL(SUM(C.VAL_2) / 1000, 0), 2) AS VAL_2,
+	    ROUND(IFNULL(SUM(C.VAL_3) / 1000, 0), 2) AS VAL_3,
+	    ROUND(IFNULL(SUM(C.VAL_4) / 1000, 0), 2) AS VAL_4,
+	    ROUND(IFNULL(SUM(C.VAL_5) / 1000, 0), 2) AS VAL_5,
+	    ROUND(IFNULL(SUM(C.VAL_6) / 1000, 0), 2) AS VAL_6,
+	    ROUND(IFNULL(SUM(C.VAL_7) / 1000, 0), 2) AS VAL_7,
+	    ROUND(IFNULL(SUM(C.VAL_8) / 1000, 0), 2) AS VAL_8,
+	    ROUND(IFNULL(SUM(C.VAL_9) / 1000, 0), 2) AS VAL_9,
+	    ROUND(IFNULL(SUM(C.VAL_10) / 1000, 0), 2) AS VAL_10,
+	    ROUND(IFNULL(SUM(C.VAL_11) / 1000, 0), 2) AS VAL_11,
+	    ROUND(IFNULL(SUM(C.VAL_12) / 1000, 0), 2) AS VAL_12,
+	    ROUND(IFNULL(SUM(C.VAL_13) / 1000, 0), 2) AS VAL_13,
+	    ROUND(IFNULL(SUM(C.VAL_14) / 1000, 0), 2) AS VAL_14,
+	    ROUND(IFNULL(SUM(C.VAL_15) / 1000, 0), 2) AS VAL_15,
+	    ROUND(IFNULL(SUM(C.VAL_16) / 1000, 0), 2) AS VAL_16,
+	    ROUND(IFNULL(SUM(C.VAL_17) / 1000, 0), 2) AS VAL_17,
+	    ROUND(IFNULL(SUM(C.VAL_18) / 1000, 0), 2) AS VAL_18,
+	    ROUND(IFNULL(SUM(C.VAL_19) / 1000, 0), 2) AS VAL_19,
+	    ROUND(IFNULL(SUM(C.VAL_20) / 1000, 0), 2) AS VAL_20,
+	    ROUND(IFNULL(SUM(C.VAL_21) / 1000, 0), 2) AS VAL_21,
+	    ROUND(IFNULL(SUM(C.VAL_22) / 1000, 0), 2) AS VAL_22,
+	    ROUND(IFNULL(SUM(C.VAL_23) / 1000, 0), 2) AS VAL_23
+	FROM bems_home AS A
+	LEFT JOIN bems_sensor_electric AS B
+	  ON A.COMPLEX_CODE_PK = B.COMPLEX_CODE_PK
+	 AND A.HOME_DONG_PK = B.HOME_DONG_PK
+	 AND A.HOME_HO_PK = B.HOME_HO_PK
+	LEFT JOIN bems_stat_daily_electric AS C
+	  ON B.SENSOR_SN = C.SENSOR_SN
+	WHERE B.FG_USE = 'Y'
+	  AND C.VAL_DATE = date_format(date_add(now(), interval -1 day), '%Y%m%d')	  
+	  AND A.COMPLEX_CODE_PK = #{complexcode}
+	  <if test = "floor != null">
+		  AND B.SENSOR_SN = #{floor}
+      </if>
+	</select>
+		
+	<select id="predictionBottom" parameterType="HashMap" resultType="HashMap">
+		/*임시 사용 주간 예측 사용량 predictionMapper.predictionBottom*/
+		SELECT
+		    SUBSTR(ADDDATE(CURDATE(), - WEEKDAY(CURDATE()) - 1 ), 6)  AS SUNDAY
+    		, SUBSTR(ADDDATE( CURDATE(), - WEEKDAY(CURDATE()) + 0 ), 6) AS MONDAY
+			, SUBSTR(ADDDATE( CURDATE(), - WEEKDAY(CURDATE()) + 1 ), 6) AS TUESDAY
+			, SUBSTR(ADDDATE( CURDATE(), - WEEKDAY(CURDATE()) + 2 ), 6) AS WEDNESDAY
+			, SUBSTR(ADDDATE( CURDATE(), - WEEKDAY(CURDATE()) + 3 ), 6) AS THURSDAY
+			, SUBSTR(ADDDATE( CURDATE(), - WEEKDAY(CURDATE()) + 4 ), 6) AS FRIDAY
+			, SUBSTR(ADDDATE( CURDATE(), - WEEKDAY(CURDATE()) + 5 ), 6) AS SATURDAY
+		FROM
+			DUAL
+		union all
+		(
+		    select
+		        ifnull(MAX(CASE WHEN id= 1 then WEEKUSAGE END), 0) as SUNDAY
+		        , ifnull(MAX(CASE WHEN id= 2 then WEEKUSAGE END), 0) as MONDAY
+		        , ifnull(MAX(CASE WHEN id= 3 then WEEKUSAGE END), 0) as TUESDAY
+		        , ifnull(MAX(CASE WHEN id= 4 then WEEKUSAGE END), 0) as WEDNESDAY
+		        , ifnull(MAX(CASE WHEN id= 5 then WEEKUSAGE END), 0) as THURSDAY
+		        , ifnull(MAX(CASE WHEN id= 6 then WEEKUSAGE END), 0) as FRIDAY
+		        , ifnull(MAX(CASE WHEN id= 7 then WEEKUSAGE END), 0) as SATURDAY
+		    From (
+		        SELECT CAST(@ROWNUM := @ROWNUM + 1 AS SIGNED INTEGER) AS ID,
+		                 B.*
+		          FROM (SELECT VAL_DATE
+		                     , ifnull(val_0 + val_1 + val_2 + val_3 + val_4 + val_5 + val_6 + val_7 + val_8 + val_9 + val_10 +
+		                              val_11 + val_12 + val_13 + val_14 + val_15 + val_16 + val_17 + val_18 + val_19 + val_20 +
+		                              val_21 + val_22 + val_23, 0) as WEEKUSAGE
+		                FROM (
+		                    SELECT IFNULL(C.VAL_DATE, '00000000')            AS VAL_DATE,
+		                         ROUND(IFNULL(SUM(C.VAL_0) / 1000, 0), 2)  AS VAL_0,
+		                         ROUND(IFNULL(SUM(C.VAL_1) / 1000, 0), 2)  AS VAL_1,
+		                         ROUND(IFNULL(SUM(C.VAL_2) / 1000, 0), 2)  AS VAL_2,
+		                         ROUND(IFNULL(SUM(C.VAL_3) / 1000, 0), 2)  AS VAL_3,
+		                         ROUND(IFNULL(SUM(C.VAL_4) / 1000, 0), 2)  AS VAL_4,
+		                         ROUND(IFNULL(SUM(C.VAL_5) / 1000, 0), 2)  AS VAL_5,
+		                         ROUND(IFNULL(SUM(C.VAL_6) / 1000, 0), 2)  AS VAL_6,
+		                         ROUND(IFNULL(SUM(C.VAL_7) / 1000, 0), 2)  AS VAL_7,
+		                         ROUND(IFNULL(SUM(C.VAL_8) / 1000, 0), 2)  AS VAL_8,
+		                         ROUND(IFNULL(SUM(C.VAL_9) / 1000, 0), 2)  AS VAL_9,
+		                         ROUND(IFNULL(SUM(C.VAL_10) / 1000, 0), 2) AS VAL_10,
+		                         ROUND(IFNULL(SUM(C.VAL_11) / 1000, 0), 2) AS VAL_11,
+		                         ROUND(IFNULL(SUM(C.VAL_12) / 1000, 0), 2) AS VAL_12,
+		                         ROUND(IFNULL(SUM(C.VAL_13) / 1000, 0), 2) AS VAL_13,
+		                         ROUND(IFNULL(SUM(C.VAL_14) / 1000, 0), 2) AS VAL_14,
+		                         ROUND(IFNULL(SUM(C.VAL_15) / 1000, 0), 2) AS VAL_15,
+		                         ROUND(IFNULL(SUM(C.VAL_16) / 1000, 0), 2) AS VAL_16,
+		                         ROUND(IFNULL(SUM(C.VAL_17) / 1000, 0), 2) AS VAL_17,
+		                         ROUND(IFNULL(SUM(C.VAL_18) / 1000, 0), 2) AS VAL_18,
+		                         ROUND(IFNULL(SUM(C.VAL_19) / 1000, 0), 2) AS VAL_19,
+		                         ROUND(IFNULL(SUM(C.VAL_20) / 1000, 0), 2) AS VAL_20,
+		                         ROUND(IFNULL(SUM(C.VAL_21) / 1000, 0), 2) AS VAL_21,
+		                         ROUND(IFNULL(SUM(C.VAL_22) / 1000, 0), 2) AS VAL_22,
+		                         ROUND(IFNULL(SUM(C.VAL_23) / 1000, 0), 2) AS VAL_23
+		                    FROM bems_home AS A
+		                    LEFT JOIN bems_sensor_electric AS B
+		                           ON A.COMPLEX_CODE_PK = B.COMPLEX_CODE_PK
+		                      AND A.HOME_DONG_PK = B.HOME_DONG_PK
+		                      AND A.HOME_HO_PK = B.HOME_HO_PK
+		                    LEFT JOIN bems_stat_daily_electric AS C
+		                           ON B.SENSOR_SN = C.SENSOR_SN
+		                    WHERE B.FG_USE = 'Y'                    
+		                      AND A.COMPLEX_CODE_PK = #{complexcode}
+							<if test = "floor != null">
+		    				  AND B.SENSOR_SN = #{floor}
+						    </if>
+		                      AND C.VAL_DATE BETWEEN
+		                        date_format(ADDDATE(CURDATE(), - WEEKDAY(CURDATE()) - 1), '%Y%m%d')
+		                        AND
+		                        date_format(ADDDATE(CURDATE(), - WEEKDAY(CURDATE()) + 5), '%Y%m%d')
+		                      group by C.val_date) a
+		                group by VAL_DATE
+		            ) B,  (SELECT @rownum:=0) TMP		          
+		    ) c
+		)
+		union all
+	    (
+	        select
+	            ifnull(MAX(CASE WHEN id= 1 then WEEKUSAGE END), 0) as SUNDAY
+	            , ifnull(MAX(CASE WHEN id= 2 then WEEKUSAGE END), 0) as MONDAY
+	            , ifnull(MAX(CASE WHEN id= 3 then WEEKUSAGE END), 0) as TUESDAY
+	            , ifnull(MAX(CASE WHEN id= 4 then WEEKUSAGE END), 0) as WEDNESDAY
+	            , ifnull(MAX(CASE WHEN id= 5 then WEEKUSAGE END), 0) as THURSDAY
+	            , ifnull(MAX(CASE WHEN id= 5 then WEEKUSAGE END), 0) as FRIDAY
+	            , ifnull(MAX(CASE WHEN id= 5 then WEEKUSAGE END), 0) as SATURDAY
+	        From (
+	            SELECT CAST(@ROWNUM2 := @ROWNUM2 + 1 AS SIGNED INTEGER) AS ID,
+	                     B.*
+	              FROM (SELECT VAL_DATE
+	                         , ifnull(val_0 + val_1 + val_2 + val_3 + val_4 + val_5 + val_6 + val_7 + val_8 + val_9 + val_10 +
+	                                  val_11 + val_12 + val_13 + val_14 + val_15 + val_16 + val_17 + val_18 + val_19 + val_20 +
+	                                  val_21 + val_22 + val_23, 0) as WEEKUSAGE
+	                    FROM (
+	                        SELECT IFNULL(C.VAL_DATE, '00000000')            AS VAL_DATE,
+	                             ROUND(IFNULL(SUM(C.VAL_0) / 1000, 0), 2)  AS VAL_0,
+	                             ROUND(IFNULL(SUM(C.VAL_1) / 1000, 0), 2)  AS VAL_1,
+	                             ROUND(IFNULL(SUM(C.VAL_2) / 1000, 0), 2)  AS VAL_2,
+	                             ROUND(IFNULL(SUM(C.VAL_3) / 1000, 0), 2)  AS VAL_3,
+	                             ROUND(IFNULL(SUM(C.VAL_4) / 1000, 0), 2)  AS VAL_4,
+	                             ROUND(IFNULL(SUM(C.VAL_5) / 1000, 0), 2)  AS VAL_5,
+	                             ROUND(IFNULL(SUM(C.VAL_6) / 1000, 0), 2)  AS VAL_6,
+	                             ROUND(IFNULL(SUM(C.VAL_7) / 1000, 0), 2)  AS VAL_7,
+	                             ROUND(IFNULL(SUM(C.VAL_8) / 1000, 0), 2)  AS VAL_8,
+	                             ROUND(IFNULL(SUM(C.VAL_9) / 1000, 0), 2)  AS VAL_9,
+	                             ROUND(IFNULL(SUM(C.VAL_10) / 1000, 0), 2) AS VAL_10,
+	                             ROUND(IFNULL(SUM(C.VAL_11) / 1000, 0), 2) AS VAL_11,
+	                             ROUND(IFNULL(SUM(C.VAL_12) / 1000, 0), 2) AS VAL_12,
+	                             ROUND(IFNULL(SUM(C.VAL_13) / 1000, 0), 2) AS VAL_13,
+	                             ROUND(IFNULL(SUM(C.VAL_14) / 1000, 0), 2) AS VAL_14,
+	                             ROUND(IFNULL(SUM(C.VAL_15) / 1000, 0), 2) AS VAL_15,
+	                             ROUND(IFNULL(SUM(C.VAL_16) / 1000, 0), 2) AS VAL_16,
+	                             ROUND(IFNULL(SUM(C.VAL_17) / 1000, 0), 2) AS VAL_17,
+	                             ROUND(IFNULL(SUM(C.VAL_18) / 1000, 0), 2) AS VAL_18,
+	                             ROUND(IFNULL(SUM(C.VAL_19) / 1000, 0), 2) AS VAL_19,
+	                             ROUND(IFNULL(SUM(C.VAL_20) / 1000, 0), 2) AS VAL_20,
+	                             ROUND(IFNULL(SUM(C.VAL_21) / 1000, 0), 2) AS VAL_21,
+	                             ROUND(IFNULL(SUM(C.VAL_22) / 1000, 0), 2) AS VAL_22,
+	                             ROUND(IFNULL(SUM(C.VAL_23) / 1000, 0), 2) AS VAL_23
+	                        FROM bems_home AS A
+	                        LEFT JOIN bems_sensor_electric AS B
+	                               ON A.COMPLEX_CODE_PK = B.COMPLEX_CODE_PK
+	                          AND A.HOME_DONG_PK = B.HOME_DONG_PK
+	                          AND A.HOME_HO_PK = B.HOME_HO_PK
+	                        LEFT JOIN bems_stat_daily_electric AS C
+	                               ON B.SENSOR_SN = C.SENSOR_SN
+	                        WHERE B.FG_USE = 'Y'
+	                          AND A.COMPLEX_CODE_PK = '2002'
+	
+	                          AND B.SENSOR_SN = '2002_ALL'
+	
+	                          AND C.VAL_DATE BETWEEN
+	                            date_format(ADDDATE(CURDATE(), - WEEKDAY(CURDATE()) - 8), '%Y%m%d')
+	                            AND
+	                            date_format(ADDDATE(CURDATE(), - WEEKDAY(CURDATE()) - 2), '%Y%m%d')
+	                          group by C.val_date) a
+	                    group by VAL_DATE
+	                ) B,   (SELECT @rownum2:=0) TMP
+	        ) c
+	    )
+	</select>
+	<!-- 8LINE : SENSOR DATA, 32LINE : SUNLIGHT DATA, 126LINE : SUNLIGHTSTATUS DATA, 176 LINE : INDEPENDENCE DATA, 435 LINE : SUNLIGHTGRAPH DATA -->
+</mapper>

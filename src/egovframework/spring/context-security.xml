@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+    xmlns:beans="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:jee="http://www.springframework.org/schema/jee"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="
+    	http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd
+    	http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-3.2.xsd
+        http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-3.2.xsd
+        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd">
+
+    <http auto-config="true">
+		<intercept-url pattern="/inspinia/**"	access="IS_AUTHENTICATED_ANONYMOUSLY" />
+
+		<intercept-url pattern="/main/**" 	access="ROLE_USER,ROLE_ADMIN,ROLE_SYS" /><!-- 전체 : 메인화면 -->
+		<intercept-url pattern="/user/**" 	access="ROLE_USER,ROLE_ADMIN,ROLE_SYS" /><!-- 전체 : 사용자 -->
+		<intercept-url pattern="/common/**" access="ROLE_USER,ROLE_ADMIN,ROLE_SYS" /><!-- 전체 : 공통 -->
+<!--
+		<intercept-url pattern="/a/**"	 	access="ROLE_USER,ROLE_ADMIN" />부분:대시보드
+		<intercept-url pattern="/b/**"	 	access="ROLE_USER" />			사용자 : 모니터링
+		<intercept-url pattern="/c/**"	 	access="ROLE_USER" />			사용자 : 분석
+		<intercept-url pattern="/d/**"	 	access="ROLE_USER" />			사용자 : 데이터관리
+		<intercept-url pattern="/e/**"	 	access="ROLE_USER,ROLE_ADMIN" />부분:기준정보관리
+-->
+
+		<intercept-url pattern="/a/**"	 	access="ROLE_USER,ROLE_ADMIN,ROLE_SYS" />			<!-- 부분:대시보드 -->
+		<intercept-url pattern="/b/**"	 	access="ROLE_USER,ROLE_ADMIN,ROLE_SYS" />			<!-- 사용자 : 모니터링 -->
+		<intercept-url pattern="/c/**"	 	access="ROLE_USER,ROLE_ADMIN,ROLE_SYS" />			<!-- 사용자 : 분석 -->
+		<intercept-url pattern="/d/**"	 	access="ROLE_USER,ROLE_ADMIN,ROLE_SYS" />			<!-- 사용자 : 데이터관리 -->
+		<intercept-url pattern="/e/**"	 	access="ROLE_USER,ROLE_ADMIN,ROLE_SYS" />			<!-- 부분:기준정보관리 -->
+		<intercept-url pattern="/**/*" method="OPTIONS" access="IS_AUTHENTICATED_ANONYMOUSLY" />			<!-- CORS 전체허용 -->
+		<intercept-url pattern="/m/**"	 	access="IS_AUTHENTICATED_ANONYMOUSLY" />			<!-- 부분:대시보드 -->
+
+        <form-login
+		    login-page="/auth/signin"
+		    username-parameter="username"
+		    password-parameter="password"
+		    login-processing-url="/signinProcess"
+		    authentication-success-handler-ref="signinSuccessHandler"
+		    authentication-failure-handler-ref="signinFailureHandler"
+	    />
+
+	    <logout
+		    invalidate-session="true"
+		    logout-success-url="/auth/signin"
+		    logout-url="/auth/signout"
+		    delete-cookies="JSESSIONID"
+	    />
+
+		<access-denied-handler ref="signinDeniedHandler"/>
+
+		<session-management>
+			<concurrency-control max-sessions="1" error-if-maximum-exceeded="true" />
+		</session-management>
+
+    </http>
+
+	<beans:bean class="org.springframework.security.web.access.expression.DefaultWebSecurityExpressionHandler"/>
+
+	<!-- 인증성공 -->
+	<beans:bean id="signinSuccessHandler" class="egovframework.kevinlab.security.handler.SigninSuccessHandler">
+		<beans:property name="defaultTargetUrl" value="/m/m01"/>
+    	<beans:property name="alwaysUseDefaultTargetUrl" value="true"/>
+	</beans:bean>
+	<!-- 인증실패 -->
+    <beans:bean id="signinFailureHandler" class="egovframework.kevinlab.security.handler.SigninFailureHandler">
+        <beans:property name="defaultFailureUrl" value="/auth/signin?error=true" />
+    </beans:bean>
+    <!-- 인증거부 -->
+	<beans:bean id="signinDeniedHandler" class="egovframework.kevinlab.security.handler.SigninDeniedHandler">
+		<beans:property name="errorPage" value="/common/error/403.jsp" />
+	</beans:bean>
+
+    <!-- auth 인증 관련 서비스 로직 -->
+    <beans:bean id="signrService" 					class="egovframework.kevinlab.security.SignUserService" />
+    <beans:bean id="signAuthenticationProvider" 	class="egovframework.kevinlab.security.SignAuthenticationProvider" />
+
+	<!-- auth 암호화 -->
+    <beans:bean id="encoder" 	class="org.springframework.security.authentication.encoding.ShaPasswordEncoder" />
+    <beans:bean id="saltSource" class="org.springframework.security.authentication.dao.ReflectionSaltSource">
+        <beans:property name="userPropertyToUse" value="username" />
+    </beans:bean>
+
+    <!-- auth 인증 Provider -->
+	<authentication-manager alias="authenticationManager">
+	    <authentication-provider ref="signAuthenticationProvider" />
+	    <authentication-provider user-service-ref="signrService">
+	        <password-encoder ref="encoder">
+	            <salt-source ref="saltSource" />
+	        </password-encoder>
+	    </authentication-provider>
+	</authentication-manager>
+
+</beans:beans>

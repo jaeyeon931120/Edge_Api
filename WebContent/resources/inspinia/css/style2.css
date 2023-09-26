@@ -1,0 +1,69 @@
+@charset "utf-8";
+ body, p, h1, h2, h3, h4, h5, h6, ul, ol, li, dl, dt, dd, table, th, td, form, fieldset, legend, input, textarea, button, select, body {
+	padding: 0;
+	margin: 0;
+	font-family:'NanumSquare', '나눔고딕', sans-serif;
+	font-style: medium !important;
+	letter-spacing:-1.5px;
+	color:#fff;
+	}
+div { display: block }
+li {list-style:none;}
+a {text-decoration:none;}
+a:hover { }
+a:active { }
+select::-ms-expand{display:none;}
+select {-webkit-appearance:none;}
+img {border:0;}
+.clear {clear:both;}
+
+.po_absolute {position:absolute;}
+.font18 {font-size:18px;}
+.font16 {font-size:16px;}
+.font22 {font-size:22px;}
+.font30 {font-size:30px;}
+.color_gray {color:#c3c3c3;}
+.align_r {text-align:right;}
+.bold {font-weight: bold;}
+.dash03_2_select {background:#fff; width: 145px;  border-radius:5px; }
+.dash03_2_select_box {width:100%; color:#1f1f1f; border:1px solid #484f5627a5d4; border-radius:5px;  padding:6px 12px; text-align:center; background:url(${pageContext.request.contextPath}/inspinia/img/a_2.png) no-repeat right; font-size:14px;}
+/*미세먼지, 등급별 컬러*/
+.blue {color:#17beff;}
+.green {color:#1c970f;}
+.yellow {color:#ffa001;}
+.red {color:#f21818}
+.sky {color:#00fffc;}
+
+/* 년,월,일 */
+.year_1 {width:195px; left:1655px; top:7px;}
+.year_2 {width:195px; left:1655px; top:27px; font-size:26px;}
+.weather01 {left:1435px; top:0px;}
+.weather02 {width:230px; left:1420px; top:17px; font-size:22px;}
+.closs_btn {top:0px; right: -17px;}
+
+/*day_select_btton*/
+.day_select_btton {background:#fff; width: 145px;  border-radius:5px; }
+.day_select_btton_box {width:100%; color:#1f1f1f; border:1px solid #484f5627a5d4; border-radius:5px;  padding:5px 12px; text-align:center; background:url(${pageContext.request.contextPath}/inspinia/img/day_btn.png) no-repeat right; font-size:14px;}
+
+/*dash03_check_button*/
+.sub_btn {border:none; text-align:center; text-decoration:none; cursor:pointer; font-size:16px; width:100px; float: right;}
+.button_check {background:#2c2e2f;  color:#fff; padding:8px 30px; margin-top:2px;}
+.button_check:hover {background:#1a1b1c;}
+/*타이틀*/
+.box_title {line-height: 35px; text-align: center;}
+/*dash04_check_button*/
+.button04_check {background:#00d79d;  color:#fff; padding:6px 30px; margin:13px 0 0 5px; border-radius:2px;}
+.button04_check:hover {background:#00b685;}
+.dash05_search {top:155px; left:75px; width:1665px;}
+.dash05_search ul {float: left; line-height: 55px;}
+.dash05_search ul li {display: inline-block; }
+.dash05_search ul li:first-child {padding:0 40px; text-align: center;}
+.dash05_contents {top:225px; left:90px; width:1740px; height: 770px;}
+.dash05_search {top:155px; left:75px; width:1665px;}
+.dash05_search ul {float: left; line-height: 55px;}
+.dash05_search ul li {display: inline-block; }
+.dash05_search ul li:first-child {padding:0 40px; text-align: center;}
+.dash05_contents {top:225px; left:90px; width:1740px; height: 770px;}
+.ui-jqgrid-bdiv{overflow-x:auto;} 
+.ui-jqgrid-bdiv{overflow-y:auto;} 
+

@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="dashboardMapper">
+			
+	<!-- 8LINE : SENSOR DATA, 33LINE : SUNLIGHT DATA, 125LINE : REALTIMEPOWER DATA, 222LINE : FLOOR DATA, 262LINE : EDGESENSORNAME,
+		 283LINE : APPLICATION DATA -->
+						
+	<!-- SUNLIGHT DATA -->
+	<select id="dashSunlight" parameterType="HashMap" resultType="HashMap">
+	/*대시보드 태양광 에너지 dashboardMapper.dashSunlight*/
+	SELECT
+		ROUND(IFNULL((MAX(A.NOW_VAL) - MIN(A.NOW_VAL)) / 1000, 0), 1) AS NOW_VAL,
+		ROUND(IFNULL(A.PREV_VAL, 0) / 1000, 1) AS YESTERDAY_VAL,
+		IFNULL(ROUND((MAX(A.NOW_VAL) - MIN(A.NOW_VAL) - A.PREV_VAL) / A.PREV_VAL * 100, 1), 0) AS VAL_EFFICIENCY,
+		A.INFO AS EFFICIENCY,
+		A.VAL_DATE AS VAL_DATE,
+		ROUND(((MAX(A.NOW_VAL) - MIN(A.NOW_VAL)) / 1000) / 32.358, 1) AS HOUR
+	FROM
+	(
+		SELECT
+			C.SENSOR_SN,
+			IFNULL(C.TOTAL_WH, 0) AS NOW_VAL,
+			IFNULL(D.VAL, 0) AS PREV_VAL,
+			IFNULL(B.CAPACITY, 0) AS CAPACITY,
+			CASE WHEN
+				REPLACE(SUBSTRING_INDEX(SUBSTRING_INDEX(SUBSTRING_INDEX(SUBSTRING_INDEX(SUBSTRING_INDEX(B.all_data, ':', 4), ':', 3), ',', 2), ',', -1), ':', 1), '"', '') like '%efficiency%'
+			THEN 
+				IFNULL(ROUND(REPLACE(SUBSTRING_INDEX(SUBSTRING_INDEX(SUBSTRING_INDEX(SUBSTRING_INDEX(B.all_data, ':', 4), ':', 3), ':', -1), ',', 1), '"', '') * 100), 0)
+			ELSE 
+				0 END AS INFO,
+			IFNULL(SUBSTR(C.VAL_DATE, 1, 12), "000000000000") AS VAL_DATE
+		FROM
+			${dbname}.bems_home AS A
+		LEFT JOIN
+			${dbname}.bems_sensor_solar AS B
+		ON
+			A.COMPLEX_CODE_PK = B.COMPLEX_CODE_PK
+		AND
+			A.HOME_DONG_PK = B.HOME_DONG_PK
+		AND
+			A.HOME_HO_PK = B.HOME_HO_PK
+		LEFT JOIN
+			${dbname}.bems_meter_solar AS C
+		ON
+			B.SENSOR_SN = C.SENSOR_SN
+		LEFT JOIN
+		(
+			SELECT
+				A.SENSOR_SN,
+				IFNULL(A.VAL_DATE, "00000000") AS VAL_DATE,
+				IFNULL(SUM(A.VAL), 0) AS VAL
+			FROM
+			(
+				SELECT
+					C.SENSOR_SN,
+					SUBSTR(C.VAL_DATE, 1, 8) AS VAL_DATE,
+					MAX(C.TOTAL_WH) - MIN(C.TOTAL_WH) AS VAL
+				FROM
+					${dbname}.bems_home AS A
+				LEFT JOIN
+					${dbname}.bems_sensor_solar AS B
+				ON
+					A.COMPLEX_CODE_PK = B.COMPLEX_CODE_PK
+				AND
+					A.HOME_DONG_PK = B.HOME_DONG_PK
+				AND
+					A.HOME_HO_PK = B.HOME_HO_PK
+				LEFT JOIN
+					${dbname}.bems_meter_solar AS C
+				ON
+					B.SENSOR_SN = C.SENSOR_SN
+				WHERE
+					B.FG_USE = "Y"
+				AND
+					C.VAL_DATE <![CDATA[>=]]> #{prevfromdate}
+				AND
+					C.VAL_DATE <![CDATA[<=]]> #{prevtodate}
+				AND
+					A.COMPLEX_CODE_PK = "2002"
+				AND
+					B.`INOUT` = "I"
+				GROUP BY C.SENSOR_SN, SUBSTR(C.VAL_DATE, 1, 8)
+			)A
+			GROUP BY A.VAL_DATE
+		)D
+		ON
+			B.SENSOR_SN = D.SENSOR_SN
+		WHERE
+			B.FG_USE = "Y"
+		AND
+			A.COMPLEX_CODE_PK = #{complexcode}
+		AND
+			B.`INOUT` = "I"
+		AND
+			C.VAL_DATE <![CDATA[>=]]> #{fromdate}
+		AND
+			C.VAL_DATE <![CDATA[<=]]> #{todate}
+		GROUP BY C.VAL_DATE
+		ORDER BY C.VAL_DATE DESC
+	)A
+	ORDER BY A.VAL_DATE DESC LIMIT 1
+	</select>
+	
+	<!-- REALTIMEPOWER DATA -->
+	<select id="dashRealTimePower" parameterType="HashMap" resultType="HashMap">
+	/*대시보드 실시간 전력사용량 dashboardMapper.dashRealTimePower*/
+	SELECT
+		IFNULL(C.VAL_DATE, '00000000') AS VAL_DATE,
+		CASE WHEN C.VAL_DATE LIKE #{prevfromdate} THEN ROUND(IFNULL(C.VAL, 0) / 1000) ELSE ROUND(IFNULL(D.VAL, 0) / 1000) END AS VAL,
+		ROUND(IFNULL(C.VAL_0, 0) / 1000, 2) AS VAL_0,
+		ROUND(IFNULL(C.VAL_1, 0) / 1000, 2) AS VAL_1,
+		ROUND(IFNULL(C.VAL_2, 0) / 1000, 2) AS VAL_2,
+		ROUND(IFNULL(C.VAL_3, 0) / 1000, 2) AS VAL_3,
+		ROUND(IFNULL(C.VAL_4, 0) / 1000, 2) AS VAL_4,
+		ROUND(IFNULL(C.VAL_5, 0) / 1000, 2) AS VAL_5,
+		ROUND(IFNULL(C.VAL_6, 0) / 1000, 2) AS VAL_6,
+		ROUND(IFNULL(C.VAL_7, 0) / 1000, 2) AS VAL_7,
+		ROUND(IFNULL(C.VAL_8, 0) / 1000, 2) AS VAL_8,
+		ROUND(IFNULL(C.VAL_9, 0) / 1000, 2) AS VAL_9,
+		ROUND(IFNULL(C.VAL_10, 0) / 1000, 2) AS VAL_10,
+		ROUND(IFNULL(C.VAL_11, 0) / 1000, 2) AS VAL_11,
+		ROUND(IFNULL(C.VAL_12, 0) / 1000, 2) AS VAL_12,
+		ROUND(IFNULL(C.VAL_13, 0) / 1000, 2) AS VAL_13,
+		ROUND(IFNULL(C.VAL_14, 0) / 1000, 2) AS VAL_14,
+		ROUND(IFNULL(C.VAL_15, 0) / 1000, 2) AS VAL_15,
+		ROUND(IFNULL(C.VAL_16, 0) / 1000, 2) AS VAL_16,
+		ROUND(IFNULL(C.VAL_17, 0) / 1000, 2) AS VAL_17,
+		ROUND(IFNULL(C.VAL_18, 0) / 1000, 2) AS VAL_18,
+		ROUND(IFNULL(C.VAL_19, 0) / 1000, 2) AS VAL_19,
+		ROUND(IFNULL(C.VAL_20, 0) / 1000, 2) AS VAL_20,
+		ROUND(IFNULL(C.VAL_21, 0) / 1000, 2) AS VAL_21,
+		ROUND(IFNULL(C.VAL_22, 0) / 1000, 2) AS VAL_22,
+		ROUND(IFNULL(C.VAL_23, 0) / 1000, 2) AS VAL_23
+	FROM
+		${dbname}.bems_home AS A
+	LEFT JOIN
+		${dbname}.bems_sensor_electric AS B
+	ON
+		A.COMPLEX_CODE_PK = B.COMPLEX_CODE_PK
+	AND
+		A.HOME_DONG_PK = B.HOME_DONG_PK
+	AND
+		A.HOME_HO_PK = B.HOME_HO_PK
+	LEFT JOIN
+		${dbname}.bems_stat_daily_electric AS C
+	ON
+		B.SENSOR_SN = C.SENSOR_SN
+	LEFT JOIN
+	(
+		SELECT
+			A.SENSOR_SN,
+			IFNULL(A.VAL_DATE, "00000000") AS VAL_DATE,
+			IFNULL(SUM(A.VAL), 0) AS VAL
+		FROM
+		(
+			SELECT
+				C.SENSOR_SN,
+				SUBSTR(C.VAL_DATE, 1, 8) AS VAL_DATE,
+				MAX(C.TOTAL_WH) - MIN(C.TOTAL_WH) AS VAL
+			FROM
+				${dbname}.bems_home AS A
+			LEFT JOIN
+				${dbname}.bems_sensor_electric AS B
+			ON
+				A.COMPLEX_CODE_PK = B.COMPLEX_CODE_PK
+			AND
+				A.HOME_DONG_PK = B.HOME_DONG_PK
+			AND
+				A.HOME_HO_PK = B.HOME_HO_PK
+			LEFT JOIN
+				${dbname}.bems_meter_electric AS C
+			ON
+				B.SENSOR_SN = C.SENSOR_SN
+			WHERE
+				B.FG_USE = "Y"
+			AND
+				C.VAL_DATE <![CDATA[>=]]> #{fromdate}
+			AND
+				C.VAL_DATE <![CDATA[<=]]> #{todate}
+			AND
+				A.COMPLEX_CODE_PK = #{complexcode}
+			<if test = "floor != null">
+			AND
+				C.SENSOR_SN = #{floor}
+			</if>
+			GROUP BY C.SENSOR_SN, SUBSTR(C.VAL_DATE, 1, 8)
+		)A
+		GROUP BY A.VAL_DATE
+	)D
+	ON
+		B.SENSOR_SN = D.SENSOR_SN
+	WHERE
+		B.FG_USE = "Y"
+	AND
+		C.VAL_DATE <![CDATA[>=]]> #{prevfromdate}
+	AND
+		A.COMPLEX_CODE_PK = #{complexcode}
+	<if test = "floor != null">
+	AND
+		C.SENSOR_SN = #{floor}
+	</if>
+	ORDER BY C.VAL_DATE DESC
+	</select>
+	
+	<!-- FLOOR DATA -->
+	<select id="dashFloor" parameterType="HashMap" resultType="HashMap">
+	/*대시보드 층별 전력사용량 dashboardMapper.dashFloor*/
+	SELECT
+		C.SENSOR_SN AS SENSOR_SN,
+		A.HOME_KEY_PK AS HOME_KEY_PK,
+		ROUND(IFNULL(MAX(C.TOTAL_WH) - MIN(C.TOTAL_WH), 0) / 1000) AS VAL
+	FROM
+		${dbname}.bems_home AS A
+	LEFT JOIN
+		${dbname}.bems_sensor_electric AS B
+	ON
+		A.COMPLEX_CODE_PK = B.COMPLEX_CODE_PK
+	AND
+		A.HOME_DONG_PK = B.HOME_DONG_PK
+	AND
+		A.HOME_HO_PK = B.HOME_HO_PK
+	LEFT JOIN
+		${dbname}.bems_meter_electric AS C
+	ON
+		B.SENSOR_SN = C.SENSOR_SN
+	WHERE
+		B.FG_USE = "Y"
+	AND
+		C.VAL_DATE <![CDATA[>=]]> #{fromdate}
+	AND
+		C.VAL_DATE <![CDATA[<=]]> #{todate}
+	AND
+		A.COMPLEX_CODE_PK = #{complexcode}
+	AND
+		C.SENSOR_SN IN
+	<foreach item="item" index="index" collection="sensor" separator="," open="(" close=")">
+		#{item}
+	</foreach>
+	GROUP BY C.SENSOR_SN, SUBSTR(C.VAL_DATE, 1, 8)
+	</select>
+	
+	<!-- EDGESENSORNAME -->
+	<select id="edgeSensorName"  parameterType="HashMap" resultType="HashMap">
+	/* 엣지 센서 이름 가져오기 dashboardMapper.edgeSensorName */
+	SELECT
+		B.sensor_sn
+	FROM
+		${dbname}.bems_home AS A
+	LEFT JOIN
+		${dbname}.${sensor} AS B
+	ON
+		A.complex_code_pk = B.complex_code_pk
+	AND
+		A.home_dong_pk = B.home_dong_pk
+	AND
+		A.home_ho_pk = B.home_ho_pk
+	WHERE
+		B.complex_code_pk = #{complexcode}
+	AND
+		B.fg_use = "y"
+	</select>
+	
+	<!-- APPLICATION DATA (우선 쿼리로 전체데이터를 가공해서 뽑아보고, 느리면 자바에서 해결.) -->
+	<select id="dashApplication" parameterType="HashMap" resultType="HashMap">
+	/*대시보드 용도별 사용량 dashboardMapper.dashApplication*/
+	SELECT
+		A.VAL_DATE AS VAL_DATE,
+		ROUND(IFNULL(SUM(A.VAL), 0), 1) AS VAL
+	FROM
+	(
+		SELECT
+			C.VAL_DATE AS VAL_DATE,
+			ROUND((C.val - D.val) / 1000, 2) AS VAL
+		FROM
+			${dbname}.bems_home AS A
+		INNER JOIN
+			${dbname}.${sensor} AS B
+		ON
+			A.complex_code_pk = B.complex_code_pk
+		AND
+			A.home_dong_pk = B.home_dong_pk
+		AND
+			A.home_ho_pk = B.home_ho_pk
+		INNER JOIN
+		(
+			SELECT
+				sensor_sn AS sensor_sn,
+				SUBSTR(MAX(VAL_DATE), 1, 8) AS VAL_DATE,
+				SUBSTRING_INDEX(GROUP_CONCAT(CAST(TOTAL_WH AS CHAR) ORDER BY VAL_DATE DESC), ',', 1) AS val
+			FROM
+				${dbname}.${meter}
+			WHERE
+				val_date LIKE #{todayfromdate}
+			<if test = "sensorlist != null and !sensorlist.isEmpty()">
+			AND sensor_sn IN
+			<foreach item="item" index="index" collection="sensorlist" open="(" close=")" separator=",">
+				#{item}
+			</foreach>
+			</if>
+			GROUP BY sensor_sn
+		)C
+		ON
+			B.sensor_sn = C.sensor_sn
+		INNER JOIN
+		(
+			SELECT
+				sensor_sn AS sensor_sn,
+				MAX(total_wh) AS val
+			FROM
+				${dbname}.${meter}
+			WHERE
+				val_date LIKE #{fromdate}
+			<if test = "sensorlist != null and !sensorlist.isEmpty()">
+			AND sensor_sn IN
+			<foreach item="item" index="index" collection="sensorlist" open="(" close=")" separator=",">
+				#{item}
+			</foreach>
+			</if>
+			GROUP BY sensor_sn
+		)D
+		ON
+		C.sensor_sn = D.sensor_sn
+		WHERE
+			B.complex_code_pk = #{complexcode}
+		<if test = "floor != null">
+		AND
+			A.home_grp_pk = #{floor}
+		</if>
+		GROUP BY
+		C.sensor_sn
+	)A
+	GROUP BY A.val_date
+	</select>
+	<!-- 8LINE : SENSOR DATA, 33LINE : SUNLIGHT DATA, 125LINE : REALTIMEPOWER DATA, 222LINE : FLOOR DATA, 262LINE : EDGESENSORNAME,
+		 283LINE : APPLICATION DATA -->
+</mapper>

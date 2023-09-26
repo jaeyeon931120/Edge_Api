@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="systemlogMapper">
+			
+	<!-- 8LINE : SENSOR DATA, 32LINE : ALARMCOUNTER DATA, 60LINE : ALARMDATA DATA, 118LINE: GETSENSORINFORMATION, 154LINE: EDGEMETERTINSERT,
+			177LINE: GETALARMONOFF, 199LINE: EDGECHECKDATA, 215LINE: UPDATEALARM, 229LINE: UPDATECONFIRM -->
+	
+	<!-- ALARMDATA DATA -->
+	<select id="systemLogData"  parameterType="HashMap" resultType="HashMap">
+	/* 알람 데이터 systemlogMapper.systemLogData */
+	SELECT
+		CAST(@ROWNUM := @ROWNUM + 1 AS SIGNED INTEGER) AS num,
+		A.*
+	FROM
+	(
+		SELECT
+			C.complex_code_pk AS complex_code_pk,
+			C.val_date AS val_date,
+			C.work_type AS work_type,
+			C.admin AS admin,
+			C.result AS result,
+			C.contents AS contents
+		FROM
+			${dbname}.bems_system_log AS C
+		JOIN
+			(SELECT @ROWNUM := 0) D
+		WHERE
+			C.complex_code_pk = #{complexcode}
+		AND
+			C.val_date <![CDATA[>=]]> #{fromdate}
+		AND
+			C.val_date <![CDATA[<=]]> #{todate}
+		<if test="work_type != null">
+		AND
+			C.work_type = #{work_type}
+		</if>
+		<if test="result != null">
+		AND
+			C.result = #{result}
+		</if>
+		GROUP BY C.no_system_log_pk
+		ORDER BY C.val_date DESC, C.work_type ASC
+	)A
+	</select>
+
+	<!-- SYSTEMLOGINSERT -->
+	<insert id="systemLogInsert"  parameterType="map">
+	/* 엣지 알람 로그 insert systemlogMapper.systemLogInsert */
+	INSERT ${dbname}.bems_system_log
+	(
+	<foreach item="item" index="index" collection="result" separator=",">
+		${item.name}
+	</foreach>
+		, reg_date
+	)
+	VALUES
+	(
+	<foreach item="item" index="index" collection="result" separator=",">
+		#{item.val}
+	</foreach>
+		, NOW()
+	)
+	ON DUPLICATE KEY UPDATE
+	<foreach item="item" index="index" collection="result" separator=",">
+		${item.name} = #{item.val}
+	</foreach>
+	</insert>
+	
+	<!-- SYSTEMLOGUPDATE -->
+	<update id="systemLogUpdate"  parameterType="map">
+	/* 엣지 알람 로그 insert systemlogMapper.systemLogUpdate */
+	UPDATE ${dbname}.bems_system_log SET
+		reason = #{reason}
+	WHERE
+		complex_code_pk = #{complexcode}
+	AND
+		work_type = #{work_type}
+	AND
+		admin = #{admin}
+	AND
+		result = #{result}
+	AND
+		reason IS NULL
+	AND
+		val_date IN (
+			SELECT
+				MAX(val_date)
+			FROM
+				${dbname}.bems_system_log
+			WHERE
+				complex_code_pk = #{complexcode}
+			AND
+				work_type = #{work_type}
+			AND
+				admin = #{admin}
+			AND
+				result = #{result}
+			AND
+				reason IS NULL
+		)
+	</update>
+	
+	<!-- 8LINE : SENSOR DATA, 32LINE : ALARMCOUNTER DATA, 60LINE : ALARMDATA DATA, 118LINE: GETSENSORINFORMATION, 154LINE: EDGEMETERTINSERT,
+			177LINE: GETALARMONOFF, 199LINE: EDGECHECKDATA, 215LINE: UPDATEALARM, 229LINE: UPDATECONFIRM -->
+</mapper>
